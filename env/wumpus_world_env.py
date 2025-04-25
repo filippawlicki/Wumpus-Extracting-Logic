@@ -34,7 +34,7 @@ class WumpusWorldEnv(gym.Env):
         self.grid = None
         self.default_map = default_map
         self.action_space = gym.spaces.Discrete(6)
-        self.observation_space = gym.spaces.MultiDiscrete(5) # [Stench, Breeze, Glitter, Bump, Scream]
+        self.observation_space = gym.spaces.MultiBinary(5) # [Stench, Breeze, Glitter, Bump, Scream]
 
         self.renderer = Renderer(self)
         self.reset()
@@ -164,7 +164,7 @@ class WumpusWorldEnv(gym.Env):
             self.agent_dir = (self.agent_dir + 1) % 4
 
         elif action == ACTION_GRAB:
-            if self.agent_pos == self.gold_pos:
+            if self.agent_pos == self.gold_pos and not self.agent_has_gold:
                 self.agent_has_gold = True
                 reward = 100
 
