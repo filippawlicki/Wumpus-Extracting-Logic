@@ -128,11 +128,9 @@ class WumpusWorldEnv(gym.Env):
 
     def _shoot(self):
         dx, dy = [(0, -1), (1, 0), (0, 1), (-1, 0)][self.agent_dir]
-        print(f"Agent position: {self.agent_pos}, Wumpus position: {self.wumpus_pos}, Dx: {dx}, Dy: {dy}")
         x, y = self.agent_pos
         while 0 <= x < self.grid_size and 0 <= y < self.grid_size:
             if (x, y) == self.wumpus_pos:
-                print("Wumpus shot!")
                 self.wumpus_alive = False
                 self.scream = True
                 return True
