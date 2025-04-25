@@ -23,10 +23,10 @@ def handle_input():
         action = 2  # Turn right
     elif keys[pygame.K_g]:
         action = 3  # Grab
-    elif keys[pygame.K_RETURN]:
-        action = 4  # Shoot
     elif keys[pygame.K_SPACE]:
-        action = 5  # Climb
+        action = 4  # Climb
+    elif keys[pygame.K_RETURN]:
+        action = 5 # Shoot
     return action
 
 env = WumpusWorldEnv(default_map=True)

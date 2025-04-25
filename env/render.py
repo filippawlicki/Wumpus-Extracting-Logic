@@ -41,7 +41,6 @@ class Renderer:
         if contents.get("agent"):
             arrows = ["↑", "→", "↓", "←"]
             dir_arrow = arrows[self.env.agent_dir]
-            print(f"Agent direction: {self.env.agent_dir}, Position: {self.env.agent_pos}")
             symbols.append((dir_arrow, self.colors["agent"]))
 
         for i, (char, color) in enumerate(symbols):
