@@ -9,9 +9,9 @@ class DQN(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(DQN, self).__init__()
         self.model = nn.Sequential(
-            nn.Linear(input_dim, 64),
+            nn.Linear(input_dim, 128),
             nn.ReLU(),
-            nn.Linear(64, 64),
+            nn.Linear(128, 64),
             nn.ReLU(),
             nn.Linear(64, output_dim)
         )
@@ -21,7 +21,7 @@ class DQN(nn.Module):
 
 
 class DQNAgent:
-    def __init__(self, state_dim, action_dim, gamma=0.9, lr=1e-3, epsilon=0.38, epsilon_decay=7e-5, min_epsilon=5e-3, weight_decay=0.01):
+    def __init__(self, state_dim, action_dim, gamma=0.9, lr=1e-3, epsilon=0.38, epsilon_decay=7e-5, min_epsilon=5e-3, weight_decay=0.01, tau=0.01):
         self._last_loss = None
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Using device: {self.device}")
@@ -30,9 +30,10 @@ class DQNAgent:
         self.optimizer = optim.Adam(self.q_net.parameters(), lr=lr, weight_decay=weight_decay)
         self.criterion = nn.MSELoss()
 
-        self.memory = deque(maxlen=1_000_000)
-        self.batch_size = 64
+        self.memory = deque(maxlen=100_000) # N_RB
+        self.batch_size = 64 # M_B
         self.gamma = gamma
+        self.tau = tau
 
         self.epsilon = epsilon
         self.epsilon_decay = epsilon_decay
@@ -43,7 +44,10 @@ class DQNAgent:
         self.update_target()
 
     def update_target(self):
-        self.target_net.load_state_dict(self.q_net.state_dict())
+        # Soft update
+        for target_param, local_param in zip(self.target_net.parameters(), self.q_net.parameters()):
+            target_param.data.copy_(self.tau * local_param.data + (1.0 - self.tau) * target_param.data)
+
 
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))

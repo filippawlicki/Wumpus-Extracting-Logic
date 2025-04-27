@@ -33,14 +33,14 @@ def save_plots(episode_rewards, episode_losses, episode, dir, window=1000):
 
 
 if __name__ == "__main__":
-    env = WumpusWorldEnv(grid_size=4, default_map=True)
+    env = WumpusWorldEnv(grid_size=4, default_map=False)
     state_dim = env.observation_space.n
     action_dim = env.action_space.n
     agent = DQNAgent(state_dim, action_dim)
 
     episodes = 20_000
-    max_steps = 100
-    target_update = 30
+    max_steps = 50
+    target_update = 100
     checkpoint_interval = 2_000
     model_dir = "checkpoints"
     os.makedirs(model_dir, exist_ok=True)
@@ -84,6 +84,7 @@ if __name__ == "__main__":
                 agent.epsilon_decay = epsilon_decay2
             agent.remember(state, action, reward, next_state, done)
             agent.replay(done)
+            agent.update_target() # Soft update of the target network
             state = next_state
             total_reward += reward
             if done:
@@ -91,9 +92,6 @@ if __name__ == "__main__":
 
         reward_history.append(total_reward)
         loss_history.append(agent.get_last_loss())
-
-        if episode % target_update == 0:
-            agent.update_target()
 
         if episode % checkpoint_interval == 0 and episode > 0:
             path = os.path.join(model_dir, f"model_ep{episode}.pt")

@@ -15,7 +15,7 @@ state_dim = env.observation_space.n
 action_dim = env.action_space.n
 agent = DQNAgent(state_dim, action_dim, epsilon=0)
 
-agent.load("models/checkpoints/model_ep10000.pt")
+agent.load("models/checkpoints/model_ep12000.pt")
 
 max_steps = 100
 steps = 0

@@ -71,11 +71,10 @@ class WumpusWorldEnv(gym.Env):
                     break
 
             self.pit_pos = []
-            for x in range(self.grid_size):
-                for y in range(self.grid_size):
-                    if (x, y) != self.entrance and (x, y) != self.wumpus_pos and (x, y) != self.gold_pos:
-                        if random.random() < 0.15: # 15% chance to place a pit
-                            self.pit_pos.append((x, y))
+            while len(self.pit_pos) < 3: # Randomly place 3 pits
+                x, y = random.randint(0, self.grid_size-1), random.randint(0, self.grid_size-1)
+                if (x, y) != self.entrance and (x, y) != self.wumpus_pos and (x, y) != self.gold_pos and (x, y) not in self.pit_pos:
+                    self.pit_pos.append((x, y))
 
         self.agent_pos = self.entrance
         self._update_perception()
