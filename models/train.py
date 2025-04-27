@@ -20,7 +20,7 @@ def save_plots(episode_rewards, episode_losses, episode, dir, window=25):
     plt.plot(rewards_smoothed, label='Episode Reward (Smoothed)', linewidth=1, color='blue')
     plt.xlabel('Episode')
     plt.ylabel('Total Reward')
-    plt.title('Total Reward per Episode (Smoothed)')
+    plt.title('Total Reward per Episode')
     plt.legend()
 
     plt.subplot(1, 2, 2)
@@ -28,7 +28,7 @@ def save_plots(episode_rewards, episode_losses, episode, dir, window=25):
     plt.plot(losses_smoothed, label='Average Loss (Smoothed)', linewidth=2, color='red')
     plt.xlabel('Episode')
     plt.ylabel('Average Loss')
-    plt.title('Average Loss per Episode (Smoothed)')
+    plt.title('Average Loss per Episode')
     plt.legend()
 
     plt.tight_layout()
