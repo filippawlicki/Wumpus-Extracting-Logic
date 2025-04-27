@@ -7,7 +7,7 @@ from dqn_agent import DQNAgent
 import matplotlib.pyplot as plt
 import os
 
-def save_plots(episode_rewards, episode_losses, episode, dir, window=1000):
+def save_plots(episode_rewards, episode_losses, episode, dir, window=25):
     """ Save reward and loss plots as images with rolling average. """
     plt.figure(figsize=(24, 8))
 
@@ -16,14 +16,16 @@ def save_plots(episode_rewards, episode_losses, episode, dir, window=1000):
     losses_smoothed = pd.Series(episode_losses).rolling(window, min_periods=1).mean()
 
     plt.subplot(1, 2, 1)
-    plt.plot(rewards_smoothed, label='Episode Reward (Smoothed)')
+    plt.plot(episode_rewards, label='Episode Reward (Original)', alpha=0.3, linewidth=0.25, color='blue')
+    plt.plot(rewards_smoothed, label='Episode Reward (Smoothed)', linewidth=1, color='blue')
     plt.xlabel('Episode')
     plt.ylabel('Total Reward')
     plt.title('Total Reward per Episode (Smoothed)')
     plt.legend()
 
     plt.subplot(1, 2, 2)
-    plt.plot(losses_smoothed, label='Average Loss per Episode (Smoothed)', color='red')
+    plt.plot(episode_losses, label='Average Loss (Original)', alpha=0.3, linewidth=0.5, color='red')
+    plt.plot(losses_smoothed, label='Average Loss (Smoothed)', linewidth=2, color='red')
     plt.xlabel('Episode')
     plt.ylabel('Average Loss')
     plt.title('Average Loss per Episode (Smoothed)')
@@ -82,7 +84,18 @@ if __name__ == "__main__":
             print(f"{checkpoint_interval} episodes took {((time.time() - start_checkpoint)/60):.2f} minutes.")
             start_checkpoint = time.time()
             print(f"Checkpoint model saved to {path}")
-            print(f"Episode {episode}/{episodes}: Reward (avg from last 100 episodes) = {np.mean(reward_history[-100::]):.3f}, \nEpsilon1 = {agent.epsilon:.3f}, Epsilon2 = {agent.epsilon2:.3f}, Loss (avg from last 100 episodes)= {np.mean(loss_history[-100::]):.3f}")
+            window = 25
+            mean_reward = np.mean(reward_history[-window:])
+            mean_loss = np.mean(loss_history[-window:])
+            print(
+                f"{'='*50}\n"
+                f"Episode {episode}/{episodes}:\n"
+                f" (loss and reward are a mean from the last {window} episodes)\n"
+                f"Reward = {mean_reward:.3f},\n"
+                f"Epsilon1 = {agent.epsilon:.3f}, Epsilon2 = {agent.epsilon2:.3f},\n"
+                f"Loss = {mean_loss:.3f}"
+                f"{'=' * 50}\n"
+            )
             save_plots(reward_history, loss_history, episode, model_dir)
 
     print(f"Training completed in {((time.time() - start_checkpoint)/60):.2f} minutes.")
