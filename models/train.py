@@ -90,7 +90,7 @@ if __name__ == "__main__":
             print(
                 f"{'='*50}\n"
                 f"Episode {episode}/{episodes}:\n"
-                f" (loss and reward are a mean from the last {window} episodes)\n"
+                f"(loss and reward are a mean from the last {window} episodes)\n"
                 f"Reward = {mean_reward:.3f},\n"
                 f"Epsilon1 = {agent.epsilon:.3f}, Epsilon2 = {agent.epsilon2:.3f},\n"
                 f"Loss = {mean_loss:.3f}\n"
