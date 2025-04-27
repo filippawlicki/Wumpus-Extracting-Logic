@@ -93,7 +93,7 @@ if __name__ == "__main__":
                 f" (loss and reward are a mean from the last {window} episodes)\n"
                 f"Reward = {mean_reward:.3f},\n"
                 f"Epsilon1 = {agent.epsilon:.3f}, Epsilon2 = {agent.epsilon2:.3f},\n"
-                f"Loss = {mean_loss:.3f}"
+                f"Loss = {mean_loss:.3f}\n"
                 f"{'=' * 50}\n"
             )
             save_plots(reward_history, loss_history, episode, model_dir)
