@@ -21,7 +21,8 @@ class DQN(nn.Module):
 
 
 class DQNAgent:
-    def __init__(self, state_dim, action_dim, gamma=0.9, lr=1e-3, epsilon=0.38, epsilon_decay=7e-5, min_epsilon=5e-3, weight_decay=0.01, tau=0.01):
+    def __init__(self, state_dim, action_dim, gamma=0.9, lr=1e-3, epsilon=0.38, epsilon_decay=7e-5, min_epsilon=5e-3,
+                 epsilon2=0.5, epsilon_decay2=5e-4, weight_decay=0.01, tau=0.01):
         self._last_loss = None
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Using device: {self.device}")
@@ -35,8 +36,12 @@ class DQNAgent:
         self.gamma = gamma
         self.tau = tau
 
+        self.tookGold = False
+
         self.epsilon = epsilon
         self.epsilon_decay = epsilon_decay
+        self.epsilon2 = epsilon2
+        self.epsilon_decay2 = epsilon_decay2
         self.min_epsilon = min_epsilon
 
         self.action_dim = action_dim
@@ -53,9 +58,13 @@ class DQNAgent:
         self.memory.append((state, action, reward, next_state, done))
 
     def act(self, state):
-        if random.random() < self.epsilon: # Explore
-            self.epsilon = max(self.min_epsilon, self.epsilon - self.epsilon_decay)
-            return random.randint(0, self.action_dim - 1)
+        if self.tookGold: # Exploration phase
+            if random.random() < self.epsilon2:
+                return random.randint(0, self.action_dim - 1)
+        else:
+            if random.random() < self.epsilon:
+                return random.randint(0, self.action_dim - 1)
+
         state = torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(self.device)
         with torch.no_grad():
             q_values = self.q_net(state)
@@ -88,10 +97,10 @@ class DQNAgent:
         loss.backward()
         self.optimizer.step()
         if done:
-            if self.epsilon > self.min_epsilon:
-                self.epsilon -= self.epsilon_decay
-            else:
-                self.epsilon = self.min_epsilon
+            self.epsilon = max(self.min_epsilon, self.epsilon - self.epsilon_decay)
+            if self.tookGold:
+                self.epsilon2 = max(self.min_epsilon, self.epsilon2 - self.epsilon_decay2)
+
 
     def save(self, path):
         torch.save(self.q_net.state_dict(), path)

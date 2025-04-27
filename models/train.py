@@ -1,4 +1,6 @@
 import time
+
+import numpy as np
 import pandas as pd
 from env.wumpus_world_env import WumpusWorldEnv
 from dqn_agent import DQNAgent
@@ -39,8 +41,7 @@ if __name__ == "__main__":
     agent = DQNAgent(state_dim, action_dim)
 
     episodes = 20_000
-    max_steps = 50
-    target_update = 100
+    max_steps = 100
     checkpoint_interval = 2_000
     model_dir = "checkpoints"
     os.makedirs(model_dir, exist_ok=True)
@@ -50,38 +51,19 @@ if __name__ == "__main__":
     reward_history = []
     loss_history = []
 
-    epsilon = 0.38
-    epsilon2 = 0.5
-    epsilon_decay = 7e-5
-    epsilon_decay2 = 5e-4
-    min_epsilon = 5e-3
-
-    used_epsilon_2 = False
-
     for episode in range(episodes):
         state, _ = env.reset()
         done = False
         total_reward = 0
 
-        if used_epsilon_2: # If we used epsilon2 in the last episode, we pull the values of epsilon2
-            epsilon2 = agent.epsilon
-
-        used_epsilon_2 = False # Reset the flag for the next episode
-
-        # Set the epsilon and epsilon_decay as it starts in the stage 1 of the epsilon greedy strategy (gold not taken)
-        agent.epsilon = epsilon
-        agent.epsilon_decay = epsilon_decay
+        agent.tookGold = False # Reset tookGold flag at the start of each episode
 
         for step in range(max_steps):
             action = agent.act(state)
             next_state, reward, done, _, info = env.step(action)
             tookGold = info["tookGold"] # If the agent took gold in this step we start stage 2 of epsilon greedy strategy
             if tookGold:
-                used_epsilon_2 = True # Set the flag to True to indicate we used epsilon2
-                epsilon = agent.epsilon
-
-                agent.epsilon = epsilon2
-                agent.epsilon_decay = epsilon_decay2
+                agent.tookGold = True
             agent.remember(state, action, reward, next_state, done)
             agent.replay(done)
             agent.update_target() # Soft update of the target network
@@ -99,7 +81,7 @@ if __name__ == "__main__":
             print(f"{checkpoint_interval} episodes took {((time.time() - start_checkpoint)/60):.2f} minutes.")
             start_checkpoint = time.time()
             print(f"Checkpoint model saved to {path}")
-            print(f"Episode {episode}/{episodes}: Reward = {total_reward}, Epsilon1 = {epsilon:.3f}, Epsilon2 = {epsilon2:.3f}, Loss = {loss_history[-1]:.4f}")
+            print(f"Episode {episode}/{episodes}: Reward (avg from last 100 episodes) = {np.mean(reward_history[-100::]):.3f}, \nEpsilon1 = {agent.epsilon:.3f}, Epsilon2 = {agent.epsilon2:.3f}, Loss (avg from last 100 episodes)= {np.mean(loss_history[-100::]):.3f}")
             save_plots(reward_history, loss_history, episode, model_dir)
 
     print(f"Training completed in {((time.time() - start_checkpoint)/60):.2f} minutes.")
