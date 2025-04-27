@@ -22,7 +22,7 @@ class DQN(nn.Module):
 
 class DQNAgent:
     def __init__(self, state_dim, action_dim, gamma=0.9, lr=1e-3, epsilon=0.38, epsilon_decay=7e-5, min_epsilon=5e-3,
-                 epsilon2=0.5, epsilon_decay2=5e-4, weight_decay=0.01, tau=0.01):
+                 epsilon2=0.5, epsilon_decay2=5e-4, min_epsilon2=5e-3, weight_decay=0.01, tau=0.01):
         self._last_loss = None
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Using device: {self.device}")
@@ -43,6 +43,7 @@ class DQNAgent:
         self.epsilon2 = epsilon2
         self.epsilon_decay2 = epsilon_decay2
         self.min_epsilon = min_epsilon
+        self.min_epsilon2 = min_epsilon2
 
         self.action_dim = action_dim
         self.state_dim = state_dim
@@ -111,4 +112,28 @@ class DQNAgent:
 
     def get_last_loss(self):
         return self._last_loss if self._last_loss is not None else 0.0
+
+    def load_epsilon(self, num_of_pits):
+        if num_of_pits == 1:
+            self.epsilon = 1.0
+            self.epsilon2 = 0.5
+            self.min_epsilon = 2e-3
+            self.min_epsilon2 = 0.01
+            self.epsilon_decay = 3.5e-4
+            self.epsilon_decay2 = 5e-4
+        elif num_of_pits == 2:
+            self.epsilon = 0.02
+            self.epsilon2 = 0.01
+            self.min_epsilon = 0.02
+            self.min_epsilon2 = 0.01
+            self.epsilon_decay = 0
+            self.epsilon_decay2 = 0
+        elif num_of_pits == 3:
+            self.epsilon = 0.38
+            self.epsilon2 = 0.5
+            self.min_epsilon = 5e-3
+            self.min_epsilon2 = 0.005
+            self.epsilon_decay = 7e-5
+            self.epsilon_decay2 = 5e-4
+
 

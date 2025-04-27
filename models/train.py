@@ -35,10 +35,11 @@ def save_plots(episode_rewards, episode_losses, episode, dir, window=1000):
 
 
 if __name__ == "__main__":
-    env = WumpusWorldEnv(grid_size=4, default_map=False)
+    env = WumpusWorldEnv(grid_size=4, default_map=False, num_of_pits=1)
     state_dim = env.observation_space.n
     action_dim = env.action_space.n
     agent = DQNAgent(state_dim, action_dim)
+    agent.load_epsilon(env.num_of_pits) # Load epsilon values based on the number of pits
 
     episodes = 20_000
     max_steps = 100

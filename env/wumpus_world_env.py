@@ -17,7 +17,7 @@ class WumpusWorldEnv(gym.Env):
     Wumpus World Environment for reinforcement learning.
     """
 
-    def __init__(self, grid_size=4, default_map=True):
+    def __init__(self, grid_size=4, default_map=True, num_of_pits=3):
         super(WumpusWorldEnv, self).__init__()
         self.bump = False
         self.scream = False
@@ -36,6 +36,7 @@ class WumpusWorldEnv(gym.Env):
         self.action_space = gym.spaces.Discrete(6)
         self.observation_space = gym.spaces.MultiBinary(5) # [Stench, Breeze, Glitter, Bump, Scream]
         self.visited = np.zeros((self.grid_size, self.grid_size), dtype=bool)
+        self.num_of_pits = num_of_pits
 
         self.renderer = Renderer(self)
         self.reset()
@@ -56,7 +57,11 @@ class WumpusWorldEnv(gym.Env):
             self.agent_dir = 2 # 0: North, 1: East, 2: South, 3: West
             self.wumpus_pos = (0, 2)
             self.gold_pos = (1, 2)
-            self.pit_pos = [(2, 0), (2, 2), (3, 3)]
+            self.pit_pos = [(2, 0)]
+            if self.num_of_pits > 1:
+                self.pit_pos.append((2, 2))
+            if self.num_of_pits > 2:
+                self.pit_pos.append((3, 3))
         else:
             self.entrance = (random.randint(0, self.grid_size-1), random.randint(0, self.grid_size-1))
             self.agent_dir = random.randint(0, 3)
@@ -71,7 +76,7 @@ class WumpusWorldEnv(gym.Env):
                     break
 
             self.pit_pos = []
-            while len(self.pit_pos) < 3: # Randomly place 3 pits
+            while len(self.pit_pos) < self.num_of_pits: # Randomly place pits
                 x, y = random.randint(0, self.grid_size-1), random.randint(0, self.grid_size-1)
                 if (x, y) != self.entrance and (x, y) != self.wumpus_pos and (x, y) != self.gold_pos and (x, y) not in self.pit_pos:
                     self.pit_pos.append((x, y))
