@@ -29,7 +29,7 @@ def handle_input():
         action = 5 # Shoot
     return action
 
-env = WumpusWorldEnv(default_map=True)
+env = WumpusWorldEnv(default_map=True, num_of_pits=1)
 
 obs, _ = env.reset()
 done = False
