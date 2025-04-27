@@ -35,6 +35,7 @@ class WumpusWorldEnv(gym.Env):
         self.default_map = default_map
         self.action_space = gym.spaces.Discrete(6)
         self.observation_space = gym.spaces.MultiBinary(5) # [Stench, Breeze, Glitter, Bump, Scream]
+        self.visited = np.zeros((self.grid_size, self.grid_size), dtype=bool)
 
         self.renderer = Renderer(self)
         self.reset()
@@ -143,52 +144,71 @@ class WumpusWorldEnv(gym.Env):
         Takes a step in the environment based on the action.
         """
 
-        reward = -1 # Default reward for each step
+        reward = 0 # Default reward for each step
         done = False
         x, y = self.agent_pos
         new_x, new_y = x, y
+        tookGold = False
 
         if action == ACTION_MOVE_FORWARD:
             dx, dy = [(0, -1), (1, 0), (0, 1), (-1, 0)][self.agent_dir]
             new_x = x + dx
             new_y = y + dy
-            if not (0 <= new_x < self.grid_size and 0 <= new_y < self.grid_size):
+            if not (0 <= new_x < self.grid_size and 0 <= new_y < self.grid_size): # Bump into wall
                 self.bump = True
+                reward += -5
             else:
                 self.agent_pos = new_x, new_y
+                if self.visited[new_x, new_y]:  # If the agent has already visited this cell
+                    reward += -0.001
+                else:  # If the agent has not visited this cell
+                    reward += 50
+                    self.visited[new_x, new_y] = True
+
+
 
         elif action == ACTION_TURN_LEFT:
             self.agent_dir = (self.agent_dir - 1) % 4
+            reward += -5
 
         elif action == ACTION_TURN_RIGHT:
             self.agent_dir = (self.agent_dir + 1) % 4
+            reward += -5
 
         elif action == ACTION_GRAB:
-            if self.agent_pos == self.gold_pos and not self.agent_has_gold:
+            if self.agent_pos == self.gold_pos and not self.agent_has_gold: # Grab gold
                 self.agent_has_gold = True
-                reward = 100
+                tookGold = True
+                reward += 500
+            elif self.agent_pos != self.gold_pos: # Tried to grab without being on gold
+                reward += -20
 
 
         elif action == ACTION_SHOOT:
             if self.has_arrow:
                 self.has_arrow = False
-                if self._shoot():
-                    reward = 50
+                if self._shoot(): # Shoot Wumpus
+                    reward += 300
+            else: # Tried to shoot without an arrow
+                reward += -20
 
         elif action == ACTION_CLIMB:
-            if self.agent_pos == self.entrance and self.agent_has_gold:
-                reward = 1000
+            if self.agent_pos == self.entrance and self.agent_has_gold: # Exit with gold
+                reward += 1000
                 done = True
+            elif self.agent_pos != self.entrance: # Tried to climb without being at the entrance
+                reward += -20
+
 
         x, y = self.agent_pos
-        if self.wumpus_alive and (x, y) == self.wumpus_pos:
-            reward = -1000
+        if self.wumpus_alive and (x, y) == self.wumpus_pos: # Death by Wumpus
+            reward += -1000
             done = True
-        elif (x, y) in self.pit_pos:
-            reward = -1000
+        elif (x, y) in self.pit_pos: # Death by pit
+            reward += -1000
             done = True
 
-        return self._get_observation(), reward, done, False, {}
+        return self._get_observation(), reward, done, False, {"tookGold": tookGold}
 
     def render(self):
         self.renderer.render(self._get_observation())

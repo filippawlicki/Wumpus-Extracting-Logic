@@ -21,16 +21,16 @@ class DQN(nn.Module):
 
 
 class DQNAgent:
-    def __init__(self, state_dim, action_dim, gamma=0.95, lr=0.01, epsilon=0.9, epsilon_decay=1e-6, min_epsilon=0.01):
+    def __init__(self, state_dim, action_dim, gamma=0.9, lr=1e-3, epsilon=0.38, epsilon_decay=7e-5, min_epsilon=5e-3, weight_decay=0.01):
         self._last_loss = None
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Using device: {self.device}")
         self.q_net = DQN(state_dim, action_dim).to(self.device)
         self.target_net = DQN(state_dim, action_dim).to(self.device)
-        self.optimizer = optim.Adam(self.q_net.parameters(), lr=lr)
+        self.optimizer = optim.Adam(self.q_net.parameters(), lr=lr, weight_decay=weight_decay)
         self.criterion = nn.MSELoss()
 
-        self.memory = deque(maxlen=1000000)
+        self.memory = deque(maxlen=1_000_000)
         self.batch_size = 64
         self.gamma = gamma
 
@@ -49,7 +49,8 @@ class DQNAgent:
         self.memory.append((state, action, reward, next_state, done))
 
     def act(self, state):
-        if random.random() < self.epsilon:
+        if random.random() < self.epsilon: # Explore
+            self.epsilon = max(self.min_epsilon, self.epsilon - self.epsilon_decay)
             return random.randint(0, self.action_dim - 1)
         state = torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(self.device)
         with torch.no_grad():
