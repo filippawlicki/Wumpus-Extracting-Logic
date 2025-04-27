@@ -6,16 +6,16 @@ import time
 import pygame
 from models.dqn_agent import DQNAgent
 
-env = WumpusWorldEnv(default_map=True)
+env = WumpusWorldEnv(grid_size=4, default_map=False, num_of_pits=1)
 
 obs, _ = env.reset()
 done = False
 
 state_dim = env.observation_space.n
 action_dim = env.action_space.n
-agent = DQNAgent(state_dim, action_dim, epsilon=0)
+agent = DQNAgent(state_dim, action_dim, epsilon=0, epsilon2=0) # Ensure no exploration
 
-agent.load("models/checkpoints/model_ep12000.pt")
+agent.load("models/checkpoints/model_ep10000.pt")
 
 max_steps = 100
 steps = 0
