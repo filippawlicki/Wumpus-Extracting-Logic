@@ -34,7 +34,7 @@ class WumpusWorldEnv(gym.Env):
         self.grid = None
         self.default_map = default_map
         self.action_space = gym.spaces.Discrete(6)
-        self.observation_space = gym.spaces.MultiDiscrete(8) # [Stench, Breeze, Glitter, Bump, Scream, hasgold, orientation]
+        self.observation_space = gym.spaces.MultiDiscrete(10) # [Stench, Breeze, Glitter, Bump, Scream, hasgold, orientation]
         self.visited = np.zeros((self.grid_size, self.grid_size), dtype=bool)
         self.num_of_pits = num_of_pits
         self.steps_taken = 0
@@ -137,8 +137,10 @@ class WumpusWorldEnv(gym.Env):
         scream = self.scream
         self.bump = False
         self.scream = False
+        posx = self.agent_pos[0]
+        posy = self.agent_pos[1]
 
-        return np.array([stench, breeze, glitter, bump, scream, hasgold, entrance, orientation], dtype=np.float32)
+        return np.array([stench, breeze, glitter, bump, scream, hasgold, entrance, orientation, posx, posy], dtype=np.float32)
 
     def _shoot(self):
         dx, dy = [(0, -1), (1, 0), (0, 1), (-1, 0)][self.agent_dir]

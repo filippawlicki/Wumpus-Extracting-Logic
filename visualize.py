@@ -11,11 +11,11 @@ env = WumpusWorldEnv(grid_size=4, default_map=True, num_of_pits=1)
 obs, _ = env.reset()
 done = False
 
-state_dim = 8
+state_dim = 10
 action_dim = env.action_space.n
 agent = DQNAgent(state_dim, action_dim, epsilon=0, epsilon2=0) # Ensure no exploration
 
-agent.load("models/checkpoints/model_ep4000.pt")
+agent.load("models/checkpoints/model_ep200.pt")
 
 max_steps = 100
 steps = 0
