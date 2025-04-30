@@ -5,36 +5,51 @@ import torch.optim as optim
 import numpy as np
 from collections import deque
 
+class ReplayBuffer:
+    def __init__(self, capacity):
+        self.buffer = deque(maxlen=capacity)
+
+    def push(self, state, action, reward, next_state, done):
+        self.buffer.append((state, action, reward, next_state, done))
+
+    def sample(self, batch_size):
+        batch = random.sample(self.buffer, batch_size)
+        states, actions, rewards, next_states, dones = map(np.array, zip(*batch))
+        return states, actions, rewards, next_states, dones
+
+    def __len__(self):
+        return len(self.buffer)
+
+
 class DQN(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(DQN, self).__init__()
-        self.model = nn.Sequential(
-            nn.Linear(input_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, output_dim)
-        )
+        self.fc1 = nn.Linear(input_dim, 256)
+        self.fc2 = nn.Linear(256, 256)
+        self.fc3 = nn.Linear(256, output_dim)
 
     def forward(self, x):
-        return self.model(x)
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        return self.fc3(x)
 
 
 class DQNAgent:
-    def __init__(self, state_dim, action_dim, gamma=0.9, lr=1e-3, epsilon=0.38, epsilon_decay=7e-5, min_epsilon=5e-3,
-                 epsilon2=0.5, epsilon_decay2=5e-4, min_epsilon2=5e-3, weight_decay=0.01, tau=0.01):
+    def __init__(self, state_dim, action_dim, gamma=0.9, lr=1e-3, epsilon=0.9, epsilon_decay=3e-4, min_epsilon=5e-3,
+                 epsilon2=0.9, epsilon_decay2=3e-4, min_epsilon2=5e-3):
         self._last_loss = None
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Using device: {self.device}")
         self.q_net = DQN(state_dim, action_dim).to(self.device)
         self.target_net = DQN(state_dim, action_dim).to(self.device)
-        self.optimizer = optim.Adam(self.q_net.parameters(), lr=lr, weight_decay=weight_decay)
-        self.criterion = nn.MSELoss()
+        self.target_net.load_state_dict(self.q_net.state_dict())
+        self.target_net.eval()
+        self.optimizer = optim.Adam(self.q_net.parameters(), lr=lr)
+        self.criterion = nn.SmoothL1Loss()
 
-        self.memory = deque(maxlen=100_000) # N_RB
-        self.batch_size = 64 # M_B
+        self.memory = ReplayBuffer(50000)
+        self.batch_size = 128
         self.gamma = gamma
-        self.tau = tau
 
         self.tookGold = False
 
@@ -47,16 +62,10 @@ class DQNAgent:
 
         self.action_dim = action_dim
         self.state_dim = state_dim
-        self.update_target()
-
-    def update_target(self):
-        # Soft update
-        for target_param, local_param in zip(self.target_net.parameters(), self.q_net.parameters()):
-            target_param.data.copy_(self.tau * local_param.data + (1.0 - self.tau) * target_param.data)
 
 
     def remember(self, state, action, reward, next_state, done):
-        self.memory.append((state, action, reward, next_state, done))
+        self.memory.push(state, action, reward, next_state, done)
 
     def act(self, state):
         if self.tookGold: # Exploration phase
@@ -66,41 +75,46 @@ class DQNAgent:
             if random.random() < self.epsilon:
                 return random.randint(0, self.action_dim - 1)
 
-        state = torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(self.device)
         with torch.no_grad():
-            q_values = self.q_net(state)
-        return q_values.argmax().item()
+            state = torch.from_numpy(state).unsqueeze(0).to(self.device)
+            q_values = self.q_net(state).cpu().numpy()
+        return np.argmax(q_values)
 
-    def replay(self, done):
+    def replay(self):
         if len(self.memory) < self.batch_size:
             return
 
-        minibatch = random.sample(self.memory, self.batch_size)
-        states, actions, rewards, next_states, dones = zip(*minibatch)
+        states, actions, rewards, next_states, dones = self.memory.sample(self.batch_size)
 
-        states = np.array(states)
-        next_states = np.array(next_states)
-        states = torch.tensor(states, dtype=torch.float32).to(self.device)
-        next_states = torch.tensor(next_states, dtype=torch.float32).to(self.device)
+        states = torch.from_numpy(states).to(self.device)
+        next_states = torch.from_numpy(next_states).to(self.device)
 
-        actions = torch.tensor(actions, dtype=torch.long).to(self.device).unsqueeze(1)
-        rewards = torch.tensor(rewards, dtype=torch.float32).to(self.device)
-        dones = torch.tensor(dones, dtype=torch.float32).to(self.device)
+        actions = torch.tensor(actions, dtype=torch.long).unsqueeze(1).to(self.device)
+        rewards = torch.tensor(rewards, dtype=torch.float32).unsqueeze(1).to(self.device)
+        dones = torch.tensor(dones, dtype=torch.float32).unsqueeze(1).to(self.device)
 
-        q_values = self.q_net(states).gather(1, actions).squeeze()
-        next_q_values = self.target_net(next_states).max(1)[0]
-        expected_q_values = rewards + (1 - dones) * self.gamma * next_q_values
+
+        q_values = self.q_net(states).gather(1, actions)
+        with torch.no_grad():
+            next_q_values = self.target_net(next_states).max(1)[0].unsqueeze(1)
+            expected_q_values = rewards + (1 - dones) * self.gamma * next_q_values
 
         loss = self.criterion(q_values, expected_q_values)
         self._last_loss = loss.item()
 
         self.optimizer.zero_grad()
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.target_net.parameters(), 5.0)
         self.optimizer.step()
-        if done:
-            self.epsilon = max(self.min_epsilon, self.epsilon - self.epsilon_decay)
-            if self.tookGold:
-                self.epsilon2 = max(self.min_epsilon, self.epsilon2 - self.epsilon_decay2)
+
+    def update_target(self):
+        self.target_net.load_state_dict(self.q_net.state_dict())
+
+
+    def decay_epsilon(self):
+        self.epsilon = max(self.min_epsilon, self.epsilon - self.epsilon_decay)
+        if self.tookGold:
+            self.epsilon2 = max(self.min_epsilon2, self.epsilon2 - self.epsilon_decay2)
 
 
     def save(self, path):
@@ -116,11 +130,11 @@ class DQNAgent:
     def load_epsilon(self, num_of_pits):
         if num_of_pits == 1:
             self.epsilon = 1.0
-            self.epsilon2 = 0.5
-            self.min_epsilon = 2e-3
+            self.epsilon2 = 0.7
+            self.min_epsilon = 0.01
             self.min_epsilon2 = 0.01
-            self.epsilon_decay = 3.5e-4
-            self.epsilon_decay2 = 5e-4
+            self.epsilon_decay = 2e-4
+            self.epsilon_decay2 = 4e-4
         elif num_of_pits == 2:
             self.epsilon = 0.02
             self.epsilon2 = 0.01
@@ -135,5 +149,6 @@ class DQNAgent:
             self.min_epsilon2 = 0.005
             self.epsilon_decay = 7e-5
             self.epsilon_decay2 = 5e-4
+
 
 

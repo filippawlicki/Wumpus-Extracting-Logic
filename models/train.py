@@ -37,15 +37,16 @@ def save_plots(episode_rewards, episode_losses, episode, dir, window=25):
 
 
 if __name__ == "__main__":
-    env = WumpusWorldEnv(grid_size=4, default_map=False, num_of_pits=1)
-    state_dim = env.observation_space.n
+    env = WumpusWorldEnv(grid_size=4, default_map=True, num_of_pits=1)
+    state_dim = 8
     action_dim = env.action_space.n
     agent = DQNAgent(state_dim, action_dim)
-    agent.load_epsilon(env.num_of_pits) # Load epsilon values based on the number of pits
+    agent.load_epsilon(env.num_of_pits) # Load epsilon values based on the number of
 
-    episodes = 20_000
-    max_steps = 100
+    episodes = 50_000
+    max_steps = 80
     checkpoint_interval = 2_000
+    target_update_interval = 25
     model_dir = "checkpoints"
     os.makedirs(model_dir, exist_ok=True)
     start_checkpoint = time.time()
@@ -53,7 +54,7 @@ if __name__ == "__main__":
 
     reward_history = []
     loss_history = []
-
+    tookgold = 0
     for episode in range(episodes):
         state, _ = env.reset()
         done = False
@@ -64,19 +65,27 @@ if __name__ == "__main__":
         for step in range(max_steps):
             action = agent.act(state)
             next_state, reward, done, _, info = env.step(action)
+            total_reward += reward
             tookGold = info["tookGold"] # If the agent took gold in this step we start stage 2 of epsilon greedy strategy
             if tookGold:
                 agent.tookGold = True
             agent.remember(state, action, reward, next_state, done)
-            agent.replay(done)
-            agent.update_target() # Soft update of the target network
             state = next_state
-            total_reward += reward
+
+            agent.replay()
+
             if done:
                 break
+        if agent.tookGold:
+            tookgold += 1
+
+        agent.decay_epsilon()
 
         reward_history.append(total_reward)
         loss_history.append(agent.get_last_loss())
+
+        if episode % target_update_interval == 0 and episode > 0:
+            agent.update_target()
 
         if episode % checkpoint_interval == 0 and episode > 0:
             path = os.path.join(model_dir, f"model_ep{episode}.pt")
@@ -96,6 +105,7 @@ if __name__ == "__main__":
                 f"Loss = {mean_loss:.3f}\n"
                 f"{'=' * 50}\n"
             )
+            print(tookgold)
             save_plots(reward_history, loss_history, episode, model_dir)
 
     print(f"Training completed in {((time.time() - start_checkpoint)/60):.2f} minutes.")

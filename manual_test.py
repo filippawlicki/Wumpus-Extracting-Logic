@@ -22,7 +22,7 @@ def handle_input():
     elif keys[pygame.K_d]:
         action = 2  # Turn right
     elif keys[pygame.K_g]:
-        action = 3  # Grab
+        action = 3  # Graba
     elif keys[pygame.K_SPACE]:
         action = 4  # Climb
     elif keys[pygame.K_RETURN]:

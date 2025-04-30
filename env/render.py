@@ -48,8 +48,8 @@ class Renderer:
             self.screen.blit(text, (x * self.tile_size + 10, y * self.tile_size + 10 + i * 20))
 
     def draw_observation_bar(self, obs):
-        stench, breeze, glitter, bump, scream = obs
-        msg = f"Stench: {'Yes' if stench else 'No'} | Breeze: {'Yes' if breeze else 'No'} | Glitter: {'Yes' if glitter else 'No'} | Bump: {'Yes' if bump else 'No'} | Scream: {'Yes' if scream else 'No'}"
+        stench, breeze, glitter, bump, scream, hasgold, orientation = obs
+        msg = f"Stench: {'Yes' if stench else 'No'} | Breeze: {'Yes' if breeze else 'No'} | Glitter: {'Yes' if glitter else 'No'} | Bump: {'Yes' if bump else 'No'} | Scream: {'Yes' if scream else 'No'} | Gold: {'Yes' if hasgold else 'No'}"
         text = self.font.render(msg, True, self.colors["text"])
         pygame.draw.rect(self.screen, (200, 200, 200), (0, self.grid_size * self.tile_size, self.width, 60))
         self.screen.blit(text, (10, self.grid_size * self.tile_size + 20))

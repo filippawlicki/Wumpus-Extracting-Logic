@@ -34,7 +34,7 @@ class WumpusWorldEnv(gym.Env):
         self.grid = None
         self.default_map = default_map
         self.action_space = gym.spaces.Discrete(6)
-        self.observation_space = gym.spaces.MultiBinary(5) # [Stench, Breeze, Glitter, Bump, Scream]
+        self.observation_space = gym.spaces.MultiDiscrete(8) # [Stench, Breeze, Glitter, Bump, Scream, hasgold, orientation]
         self.visited = np.zeros((self.grid_size, self.grid_size), dtype=bool)
         self.num_of_pits = num_of_pits
         self.steps_taken = 0
@@ -124,14 +124,21 @@ class WumpusWorldEnv(gym.Env):
             stench = 0
         if self.agent_has_gold:
             glitter = 0
+            hasgold = 1
         else:
+            hasgold = 0
             glitter = 1 if self.agent_pos == self.gold_pos else 0
+        orientation = self.agent_dir
+        if self.agent_pos == self.entrance:
+            entrance = 1
+        else:
+            entrance = 0
         bump = self.bump
         scream = self.scream
         self.bump = False
         self.scream = False
 
-        return np.array([stench, breeze, glitter, bump, scream], dtype=int)
+        return np.array([stench, breeze, glitter, bump, scream, hasgold, entrance, orientation], dtype=np.float32)
 
     def _shoot(self):
         dx, dy = [(0, -1), (1, 0), (0, 1), (-1, 0)][self.agent_dir]
@@ -150,7 +157,7 @@ class WumpusWorldEnv(gym.Env):
         Takes a step in the environment based on the action.
         """
 
-        reward = 0 # Default reward for each step
+        reward = -1 # Default reward for each step
         done = False
         x, y = self.agent_pos
         new_x, new_y = x, y
@@ -168,29 +175,13 @@ class WumpusWorldEnv(gym.Env):
                 reward = -5
             else:
                 self.agent_pos = new_x, new_y
-                if self.visited[new_x, new_y]:  # If the agent has already visited this cell
-                    if log:
-                        print("Visited cell: -0.001 reward")
-                    reward = -0.001
-                else:  # If the agent has not visited this cell
-                    if log:
-                        print("Visited new cell: +50 reward")
-                    reward = 50
-                    self.visited[new_x, new_y] = True
-
 
 
         elif action == ACTION_TURN_LEFT:
             self.agent_dir = (self.agent_dir - 1) % 4
-            if log:
-                print("Turn left: -5 reward")
-            reward = -5
 
         elif action == ACTION_TURN_RIGHT:
             self.agent_dir = (self.agent_dir + 1) % 4
-            if log:
-                print("Turn right: -5 reward")
-            reward = -5
 
         elif action == ACTION_GRAB:
             if self.agent_pos == self.gold_pos and not self.agent_has_gold: # Grab gold
@@ -221,7 +212,7 @@ class WumpusWorldEnv(gym.Env):
             if self.agent_pos == self.entrance and self.agent_has_gold: # Exit with gold
                 if log:
                     print("Exit with gold: +1000 reward")
-                reward = 1000
+                reward = 10000
                 done = True
             elif self.agent_pos != self.entrance or not self.agent_has_gold: # Tried to climb without being at the entrance or without gold
                 if log:
@@ -242,7 +233,7 @@ class WumpusWorldEnv(gym.Env):
             done = True
 
         self.steps_taken += 1
-        if self.steps_taken >= 100: # Max steps
+        if self.steps_taken >= 1000: # Max steps
             if log:
                 print("Max steps reached: -1000 reward")
             reward = -1000
