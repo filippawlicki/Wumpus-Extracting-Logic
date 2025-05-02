@@ -64,6 +64,11 @@ class DQNAgent:
         self.state_dim = state_dim
 
 
+    def load_model(self, model_path):
+        self.q_net.load_state_dict(torch.load(model_path))
+        self.target_net.load_state_dict(self.q_net.state_dict())
+        self.target_net.eval()
+
     def remember(self, state, action, reward, next_state, done):
         self.memory.push(state, action, reward, next_state, done)
 
