@@ -142,6 +142,7 @@ class WumpusWorldEnv(gym.Env):
 
         return np.array([stench, breeze, glitter, bump, scream, hasgold, entrance, orientation, posx, posy], dtype=np.float32)
 
+
     def _shoot(self):
         dx, dy = [(0, -1), (1, 0), (0, 1), (-1, 0)][self.agent_dir]
         x, y = self.agent_pos
@@ -213,7 +214,7 @@ class WumpusWorldEnv(gym.Env):
         elif action == ACTION_CLIMB:
             if self.agent_pos == self.entrance and self.agent_has_gold: # Exit with gold
                 if log:
-                    print("Exit with gold: +1000 reward")
+                    print("Exit with gold: +10000 reward")
                 reward = 10000
                 done = True
             elif self.agent_pos != self.entrance or not self.agent_has_gold: # Tried to climb without being at the entrance or without gold

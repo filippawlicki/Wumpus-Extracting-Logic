@@ -31,7 +31,7 @@ class_names = [class_names_map[i] for i in unique_classes]
 
 tree_rules = export_text(clf, feature_names=list(X.columns), class_names=class_names)
 
-with open("decision_tree_rules.txt", "w") as f:
+with open("decision_tree_rules_default_map_3pit.txt", "w") as f:
     f.write(tree_rules)
 
 print("Decision tree rules saved to decision_tree_rules.txt")
