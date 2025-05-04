@@ -52,7 +52,7 @@ class WumpusWorldEnv(gym.Env):
 
         if self.default_map:
             self.entrance = (0, 0)
-            self.agent_dir = 2 # 0: North, 1: East, 2: South, 3: West
+            self.agent_dir = 2  # 0: North, 1: East, 2: South, 3: West
             self.wumpus_pos = (0, 2)
             self.gold_pos = (1, 2)
             self.pit_pos = [(2, 0), (2, 2), (3, 3)]
@@ -86,12 +86,12 @@ class WumpusWorldEnv(gym.Env):
     def _update_perception(self):
         for x, y in self.pit_pos:
             for nx, ny in self._get_neighbors((x, y)):
-                self.grid[nx, ny, 0] = 1 # Breeze
+                self.grid[nx, ny, 0] = 1  # Breeze
 
         if self.wumpus_alive:
             wx, wy = self.wumpus_pos
             for nx, ny in self._get_neighbors((wx, wy)):
-                self.grid[nx, ny, 1] = 1 # Stench
+                self.grid[nx, ny, 1] = 1  # Stench
 
 
 
@@ -167,7 +167,6 @@ class WumpusWorldEnv(gym.Env):
             if self.agent_pos == self.gold_pos:
                 self.agent_has_gold = True
                 reward = 100
-
 
         elif action == ACTION_SHOOT:
             if self.has_arrow:
