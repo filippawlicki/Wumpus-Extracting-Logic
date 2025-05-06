@@ -36,8 +36,11 @@ class WumpusWorldEnv(gym.Env):
         self.action_space = gym.spaces.Discrete(6)
         self.observation_space = gym.spaces.MultiDiscrete(10) # [Stench, Breeze, Glitter, Bump, Scream, hasgold, orientation]
         self.visited = np.zeros((self.grid_size, self.grid_size), dtype=bool)
+        self.visited.fill(False)
         self.num_of_pits = num_of_pits
         self.steps_taken = 0
+        # Top left corner 2x2 box is prohibited for creating the map as its the entrance
+        self.prohibited_box = [(0, 0), (0, 1), (1, 0), (1, 1)]
 
         self.renderer = Renderer(self)
         self.reset()
@@ -50,8 +53,12 @@ class WumpusWorldEnv(gym.Env):
         self.agent_has_gold = False
         self.has_arrow = True
         self.steps_taken = 0
+        self.bump = False
+        self.scream = False
 
         self.grid = np.zeros((self.grid_size, self.grid_size, 2), dtype=int) # breeze, stench, glitter
+        self.visited = np.zeros((self.grid_size, self.grid_size), dtype=bool)
+        self.visited.fill(False)
 
 
         if self.default_map:
@@ -65,22 +72,22 @@ class WumpusWorldEnv(gym.Env):
             if self.num_of_pits > 2:
                 self.pit_pos.append((3, 3))
         else:
-            self.entrance = (random.randint(0, self.grid_size-1), random.randint(0, self.grid_size-1))
+            self.entrance = (0, 0)
             self.agent_dir = random.randint(0, 3)
             while True:
                 self.wumpus_pos = (random.randint(0, self.grid_size-1), random.randint(0, self.grid_size-1))
-                if self.wumpus_pos != self.entrance:
+                if self.wumpus_pos != self.entrance and self.wumpus_pos not in self.prohibited_box:
                     break
 
             while True:
                 self.gold_pos = (random.randint(0, self.grid_size-1), random.randint(0, self.grid_size-1))
-                if self.gold_pos != self.entrance and self.gold_pos != self.wumpus_pos:
+                if self.gold_pos != self.entrance and self.gold_pos != self.wumpus_pos and self.gold_pos not in self.prohibited_box:
                     break
 
             self.pit_pos = []
             while len(self.pit_pos) < self.num_of_pits: # Randomly place pits
                 x, y = random.randint(0, self.grid_size-1), random.randint(0, self.grid_size-1)
-                if (x, y) != self.entrance and (x, y) != self.wumpus_pos and (x, y) != self.gold_pos and (x, y) not in self.pit_pos:
+                if (x, y) != self.entrance and (x, y) != self.wumpus_pos and (x, y) != self.gold_pos and (x, y) not in self.pit_pos and (x, y) not in self.prohibited_box:
                     self.pit_pos.append((x, y))
 
         self.agent_pos = self.entrance
@@ -165,7 +172,9 @@ class WumpusWorldEnv(gym.Env):
         x, y = self.agent_pos
         new_x, new_y = x, y
         tookGold = False
+        won = False
         log = False
+        self.scream = False
 
         if action == ACTION_MOVE_FORWARD:
             dx, dy = [(0, -1), (1, 0), (0, 1), (-1, 0)][self.agent_dir]
@@ -177,14 +186,21 @@ class WumpusWorldEnv(gym.Env):
                     print("Bump into wall: -5 reward")
                 reward = -5
             else:
+                if self.visited[new_x, new_y]:
+                    reward = -0.001 # Small penalty for revisiting a cell
+                else:
+                    self.visited[new_x, new_y] = True
+                    reward = 50 # Small reward for visiting a new cell
                 self.agent_pos = new_x, new_y
 
 
         elif action == ACTION_TURN_LEFT:
             self.agent_dir = (self.agent_dir - 1) % 4
+            #reward = -5
 
         elif action == ACTION_TURN_RIGHT:
             self.agent_dir = (self.agent_dir + 1) % 4
+            #reward = -5
 
         elif action == ACTION_GRAB:
             if self.agent_pos == self.gold_pos and not self.agent_has_gold: # Grab gold
@@ -205,6 +221,7 @@ class WumpusWorldEnv(gym.Env):
                 if self._shoot(): # Shoot Wumpus
                     if log:
                         print("Shoot Wumpus: +300 reward")
+                    self.scream = True
                     reward = 300
             else: # Tried to shoot without an arrow
                 if log:
@@ -214,8 +231,9 @@ class WumpusWorldEnv(gym.Env):
         elif action == ACTION_CLIMB:
             if self.agent_pos == self.entrance and self.agent_has_gold: # Exit with gold
                 if log:
-                    print("Exit with gold: +10000 reward")
-                reward = 10000
+                    print("Exit with gold: +1000 reward")
+                reward = 1000
+                won = True
                 done = True
             elif self.agent_pos != self.entrance or not self.agent_has_gold: # Tried to climb without being at the entrance or without gold
                 if log:
@@ -236,13 +254,13 @@ class WumpusWorldEnv(gym.Env):
             done = True
 
         self.steps_taken += 1
-        if self.steps_taken >= 1000: # Max steps
+        if self.steps_taken >= 100: # Max steps
             if log:
                 print("Max steps reached: -1000 reward")
             reward = -1000
             done = True
 
-        return self._get_observation(), reward, done, False, {"tookGold": tookGold}
+        return self._get_observation(), reward, done, False, {"tookGold": tookGold, "won": won}
 
     def render(self):
         self.renderer.render(self._get_observation())

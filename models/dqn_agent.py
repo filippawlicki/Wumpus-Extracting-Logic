@@ -47,8 +47,8 @@ class DQNAgent:
         self.optimizer = optim.Adam(self.q_net.parameters(), lr=lr)
         self.criterion = nn.SmoothL1Loss()
 
-        self.memory = ReplayBuffer(50000)
-        self.batch_size = 128
+        self.memory = ReplayBuffer(100_000)
+        self.batch_size = 64
         self.gamma = gamma
 
         self.tookGold = False
@@ -109,7 +109,7 @@ class DQNAgent:
 
         self.optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.target_net.parameters(), 5.0)
+        torch.nn.utils.clip_grad_norm_(self.q_net.parameters(), 5.0)
         self.optimizer.step()
 
     def update_target(self):
@@ -134,19 +134,19 @@ class DQNAgent:
 
     def load_epsilon(self, num_of_pits):
         if num_of_pits == 1:
-            self.epsilon = 1.0
-            self.epsilon2 = 0.7
+            self.epsilon = 0.3
+            self.epsilon2 = 0.3
             self.min_epsilon = 0.01
             self.min_epsilon2 = 0.01
-            self.epsilon_decay = 2e-4
-            self.epsilon_decay2 = 4e-4
+            self.epsilon_decay = 1e-4
+            self.epsilon_decay2 = 2e-4
         elif num_of_pits == 2:
-            self.epsilon = 0.02
-            self.epsilon2 = 0.01
+            self.epsilon = 0.5
+            self.epsilon2 = 0.5
             self.min_epsilon = 0.02
             self.min_epsilon2 = 0.01
-            self.epsilon_decay = 0
-            self.epsilon_decay2 = 0
+            self.epsilon_decay = 8e-5
+            self.epsilon_decay2 = 8e-5
         elif num_of_pits == 3:
             self.epsilon = 0.38
             self.epsilon2 = 0.5
