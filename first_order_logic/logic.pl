@@ -12,12 +12,16 @@
 :- dynamic grid_size/1.
 :- dynamic log/1.
 
+adj(-1, 0).
+adj(0, -1).
 adj(0, 1).
 adj(1, 0).
 adj(1, 2).
 adj(2, 1).
 adj(2, 3).
 adj(3, 2).
+adj(3, 4).
+adj(4, 3).
 
 adjacent(X, Y, NX, NY) :-
 	(NX is X, adj(Y, NY));
@@ -52,10 +56,12 @@ make_decision(Action, S) :-
     agent(X, Y, S),
     orientation(Dir, S),
     cell_ahead(X, Y, Dir, NX, NY),
+    kb(NX, NY, wall, IsWallAhead),
     (log(true) ->
 	    nl, write('Agent: '), write((X, Y)),
 	    write(', Dir: '), write(Dir),
 	    write(', Cell: '), write((NX, NY)),
+	    write(', Wall ahead: '), write(IsWallAhead),
 	    nl
 	;   true),
     (holding(gold, S), start(X, Y) ->
@@ -76,7 +82,7 @@ make_decision(Action, S) :-
                     (log(true) -> write('shooting'), nl; true)
                 ;   \+ valid_cell(NX, NY) ->
                         Action = turn_left,
-                        (log(true) -> write('bumped, turning left'), nl; ture)
+                        (log(true) -> write('bumped, turning left'), nl; true)
                     ;   good_cell(NX, NY, S) -> 
                             Action = move,
                             (log(true) -> write('moving to good cell'), nl; true)
@@ -260,7 +266,8 @@ valid_cell(X, Y) :-
 
 safe_cell(X, Y) :-
     kb(X, Y, pit, false),
-    kb(X, Y, wumpus, false).
+    kb(X, Y, wumpus, false),
+    valid_cell(X, Y).
 
 visited(X, Y) :-
     kb(X, Y, visited, true).

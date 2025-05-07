@@ -155,9 +155,9 @@ class FOLAgent:
         return 1 if done else 0
 
 if __name__ == "__main__":
-    testing = True
-    default_map = False
-    log = False
+    testing = False
+    default_map = not testing
+    log = not testing
     GAME_COUNT = 1_000
     winCount = 0
     for _ in range(GAME_COUNT) if testing else range(1):
