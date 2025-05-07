@@ -35,7 +35,7 @@ while episode < max_episodes:
         # mapping [stench, breeze, glitter, bump, scream, hasgold, on_entrance]
         input_features = obs[:7].tolist() if hasattr(obs, "tolist") else list(obs[:5])
         action_for_dataset = action
-        if action > 1:
+        if action > 1: # Turn left or right is action 1 and 2 so we need to subtract 1 to map it to just 1
             action_for_dataset = action - 1
         dataset.append(input_features + [action_for_dataset])
 
