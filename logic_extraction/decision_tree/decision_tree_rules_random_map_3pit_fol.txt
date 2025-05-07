@@ -1,0 +1,52 @@
+|--- bump <= 0.50
+|   |--- breeze <= 0.50
+|   |   |--- on_entrance <= 0.50
+|   |   |   |--- stench <= 0.50
+|   |   |   |   |--- glitter <= 0.50
+|   |   |   |   |   |--- hasgold <= 0.50
+|   |   |   |   |   |   |--- scream <= 0.50
+|   |   |   |   |   |   |   |--- class: Move Forward
+|   |   |   |   |   |   |--- scream >  0.50
+|   |   |   |   |   |   |   |--- class: Move Forward
+|   |   |   |   |   |--- hasgold >  0.50
+|   |   |   |   |   |   |--- scream <= 0.50
+|   |   |   |   |   |   |   |--- class: Move Forward
+|   |   |   |   |   |   |--- scream >  0.50
+|   |   |   |   |   |   |   |--- class: Turn
+|   |   |   |   |--- glitter >  0.50
+|   |   |   |   |   |--- class: Grab
+|   |   |   |--- stench >  0.50
+|   |   |   |   |--- glitter <= 0.50
+|   |   |   |   |   |--- hasgold <= 0.50
+|   |   |   |   |   |   |--- class: Turn
+|   |   |   |   |   |--- hasgold >  0.50
+|   |   |   |   |   |   |--- class: Turn
+|   |   |   |   |--- glitter >  0.50
+|   |   |   |   |   |--- class: Grab
+|   |   |--- on_entrance >  0.50
+|   |   |   |--- hasgold <= 0.50
+|   |   |   |   |--- class: Turn
+|   |   |   |--- hasgold >  0.50
+|   |   |   |   |--- class: Climb
+|   |--- breeze >  0.50
+|   |   |--- glitter <= 0.50
+|   |   |   |--- scream <= 0.50
+|   |   |   |   |--- stench <= 0.50
+|   |   |   |   |   |--- hasgold <= 0.50
+|   |   |   |   |   |   |--- class: Turn
+|   |   |   |   |   |--- hasgold >  0.50
+|   |   |   |   |   |   |--- class: Turn
+|   |   |   |   |--- stench >  0.50
+|   |   |   |   |   |--- hasgold <= 0.50
+|   |   |   |   |   |   |--- class: Turn
+|   |   |   |   |   |--- hasgold >  0.50
+|   |   |   |   |   |   |--- class: Turn
+|   |   |   |--- scream >  0.50
+|   |   |   |   |--- hasgold <= 0.50
+|   |   |   |   |   |--- class: Turn
+|   |   |   |   |--- hasgold >  0.50
+|   |   |   |   |   |--- class: Turn
+|   |   |--- glitter >  0.50
+|   |   |   |--- class: Grab
+|--- bump >  0.50
+|   |--- class: Turn

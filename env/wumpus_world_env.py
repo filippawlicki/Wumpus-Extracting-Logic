@@ -2,13 +2,7 @@ import gymnasium as gym
 import numpy as np
 import random
 from env.render import Renderer
-
-ACTION_MOVE_FORWARD = 0
-ACTION_TURN_LEFT = 1
-ACTION_TURN_RIGHT = 2
-ACTION_GRAB = 3
-ACTION_CLIMB = 4
-ACTION_SHOOT = 5
+import config
 
 
 
@@ -176,7 +170,7 @@ class WumpusWorldEnv(gym.Env):
         log = False
         self.scream = False
 
-        if action == ACTION_MOVE_FORWARD:
+        if action == config.ACTION_MOVE_FORWARD:
             dx, dy = [(0, -1), (1, 0), (0, 1), (-1, 0)][self.agent_dir]
             new_x = x + dx
             new_y = y + dy
@@ -194,15 +188,15 @@ class WumpusWorldEnv(gym.Env):
                 self.agent_pos = new_x, new_y
 
 
-        elif action == ACTION_TURN_LEFT:
+        elif action == config.ACTION_TURN_LEFT:
             self.agent_dir = (self.agent_dir - 1) % 4
             #reward = -5
 
-        elif action == ACTION_TURN_RIGHT:
+        elif action == config.ACTION_TURN_RIGHT:
             self.agent_dir = (self.agent_dir + 1) % 4
             #reward = -5
 
-        elif action == ACTION_GRAB:
+        elif action == config.ACTION_GRAB:
             if self.agent_pos == self.gold_pos and not self.agent_has_gold: # Grab gold
                 self.agent_has_gold = True
                 tookGold = True
@@ -215,7 +209,7 @@ class WumpusWorldEnv(gym.Env):
                 reward = -20
 
 
-        elif action == ACTION_SHOOT:
+        elif action == config.ACTION_SHOOT:
             if self.has_arrow:
                 self.has_arrow = False
                 if self._shoot(): # Shoot Wumpus
@@ -228,7 +222,7 @@ class WumpusWorldEnv(gym.Env):
                     print("Tried to shoot without an arrow: -20 reward")
                 reward = -20
 
-        elif action == ACTION_CLIMB:
+        elif action == config.ACTION_CLIMB:
             if self.agent_pos == self.entrance and self.agent_has_gold: # Exit with gold
                 if log:
                     print("Exit with gold: +1000 reward")

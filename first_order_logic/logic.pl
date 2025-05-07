@@ -62,6 +62,10 @@ make_decision(Action, S) :-
 	    write(', Dir: '), write(Dir),
 	    write(', Cell: '), write((NX, NY)),
 	    write(', Wall ahead: '), write(IsWallAhead),
+	    (kb(WumpusX, WumpusY, wumpus, true) ->
+	        write(', Wumpus: '), write((WumpusX, WumpusY))
+	    ;   true
+	    ),
 	    nl
 	;   true),
     (holding(gold, S), start(X, Y) ->
@@ -201,7 +205,7 @@ update_kb(X, Y, Perceptions, S) :-
 
     % Deduce Wumpus location if only one possible remains
     findall((PX, PY), (adjacent(X, Y, PX, PY), kb(PX, PY, wumpus, possible)), PossibleWumpus),
-    (length(PossibleWumpus, 1) ->
+    (length(PossibleWumpus, 1), \+ kb(_, _, wumpus, true) ->
         [WumpusPos] = PossibleWumpus,
         WumpusPos = (WX, WY),
         retract(kb(WX, WY, wumpus, possible)), assert(kb(WX, WY, wumpus, true))

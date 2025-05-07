@@ -5,13 +5,22 @@ import config
 from env.wumpus_world_env import WumpusWorldEnv
 
 class FOLAgent:
-    def __init__(self, env, testing=False, log=False):
+    def __init__(self, env, rendering=False, log=False):
         self.env = env
         self.prolog = Prolog()
         self.prolog.consult(str(config.ROOT_DIR / "first_order_logic" / "logic.pl").replace("\\", "/"))
         self.state_counter = 0
-        self.testing = testing
+        self.rendering = rendering
         self.log = log
+        self.max_steps = 100
+
+        self.initialize_prolog()
+
+    def reset(self):
+        self.state_counter = 0
+        obs, _ = self.env.reset()
+        self.initialize_prolog()
+        return obs
 
     def initialize_prolog(self):
         # Clear existing facts in Prolog
@@ -56,6 +65,9 @@ class FOLAgent:
         if self.log:
             self.prolog.assertz(f"log(true)")
 
+        # Update knowledge base
+        self.update_kb(self.env._get_observation())
+
     def update_kb(self, perceptions):
         ax, ay = self.env.agent_pos
         # perceptions = self.env._get_observation()
@@ -68,11 +80,13 @@ class FOLAgent:
         if perceptions[2]:
             perception_list.append("glitter")
         if perceptions[3]:
-            # print("bump (update_kb)")
             perception_list.append("bump")
         if perceptions[4]:
-            # print("scream (update_kb)")
             perception_list.append("scream")
+        if perceptions[5]:
+            perception_list.append("hasgold")
+        if perceptions[6]:
+            perception_list.append("on_entrance")
         list(self.prolog.query(f"update_kb({ax}, {ay}, {perception_list}, {self.state_counter})"))
 
     def update_result(self, action):
@@ -91,23 +105,15 @@ class FOLAgent:
         return decision
 
     def execute_action(self, action):
-        if action == "grab":
+        if action == config.ACTION_GRAB:
             if self.env.agent_pos == self.env.gold_pos:
-                list(self.prolog.query(f"retract(gold({self.env.gold_pos[0]}, {self.env.gold_pos[1]}))"))  # Remove gold from Prolog
-            obs, *_ = self.env.step(3)
-        elif action == "climb":
-            obs, *_ = self.env.step(4)
-        elif action == "move":
-            obs, *_ = self.env.step(0)
-        elif action == "turn_left":
-            obs, *_ = self.env.step(1)
-        elif action == "turn_right":
-            obs, *_ = self.env.step(2)
-        elif action == "shoot":
+                list(self.prolog.query(f"retract(gold({self.env.gold_pos[0]}, {self.env.gold_pos[1]}))"))
+        elif action == config.ACTION_SHOOT:
             list(self.prolog.query(f"retract(wumpus({self.env.wumpus_pos[0]}, {self.env.wumpus_pos[1]}))"))
-            obs, *_ = self.env.step(5)
-        # print(f"state: {self.state_counter}, action: {action}, obs: {obs}")
-        return obs
+
+        obs, _, _, _, feedback = self.env.step(action)
+
+        return obs, feedback["won"]
 
     def render_environment(self):
         self.env.render()
@@ -115,57 +121,56 @@ class FOLAgent:
         # input("Press Enter to continue...")  # Wait for user input after rendering
 
     def run(self):
-        # Initialize Prolog with environment data
-        self.initialize_prolog()
-
-        # Loop until the game ends
         done = False
 
-        # Update knowledge base
-        self.update_kb(self.env._get_observation())
-
-        for i in range(100):
-            # Render the environment at each step
-            if not self.testing:
-                self.render_environment()
-
-
-            # Determine the next action using Prolog
-            action = self.make_decision()
-
-            # Update the result in Prolog
-            self.update_result(action)
-
-            # Execute the action in the environment
-            perceptions = self.execute_action(action)
-
-            self.update_kb(perceptions)
-
-            # Increment the state counter
-            self.state_counter += 1
-
-            # Update agent position and orientation in Prolog
-            self.update_agent_position_and_orientation()
-
-            # Check if the game is done
-            if action == "climb" and self.env.agent_pos == self.env.entrance:
+        for i in range(self.max_steps):
+            action, has_won, _ = self.act()
+            if has_won:
                 done = True
                 break
 
         return 1 if done else 0
 
+    def act(self):
+        # Render the environment at each step
+        if self.rendering:
+            self.render_environment()
+
+        action = self.make_decision()
+        self.update_result(action)
+
+        # Convert action to integer for execution
+        action_map = {
+            "move": config.ACTION_MOVE_FORWARD,
+            "turn_left": config.ACTION_TURN_LEFT,
+            "turn_right": config.ACTION_TURN_RIGHT,
+            "grab": config.ACTION_GRAB,
+            "climb": config.ACTION_CLIMB,
+            "shoot": config.ACTION_SHOOT
+        }
+        action_int = action_map[action]
+
+        obs, has_won = self.execute_action(action_int)
+
+        self.update_kb(obs)
+        self.state_counter += 1
+        self.update_agent_position_and_orientation()
+
+        return action_int, has_won, obs
+
+
 if __name__ == "__main__":
-    testing = False
-    default_map = not testing
-    log = not testing
-    GAME_COUNT = 1_000
+    rendering = False
+    default_map = False
+    log = False
+    GAME_COUNT = 10_000
     winCount = 0
-    for _ in range(GAME_COUNT) if testing else range(1):
+    for _ in range(GAME_COUNT) if not rendering else range(1):
         env = WumpusWorldEnv(default_map=default_map, num_of_pits=3)
-        agent = FOLAgent(env, testing=testing, log=log)
+        agent = FOLAgent(env, rendering=rendering, log=log)
         win = agent.run()
         winCount += win
-    if testing:
+    if not rendering:
         print(f"{GAME_COUNT} games finished. Win rate: {winCount/GAME_COUNT * 100:.2f}%")
     else:
         print(f"Game finished.")

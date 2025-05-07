@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
 # Load dataset
-df = pd.read_csv("../datasets/dqn_3pit_random_map_dataset.csv")
+df = pd.read_csv("../datasets/fol_3pit_random_map_dataset.csv")
 X = df[["stench", "breeze", "glitter", "bump", "scream", "hasgold", "on_entrance"]]
 y = df["action"]
 
@@ -30,7 +30,7 @@ class_names = [class_names_map[i] for i in unique_classes]
 
 tree_rules = export_text(clf, feature_names=list(X.columns), class_names=class_names)
 
-with open("decision_tree_rules_random_map_3pit.txt", "w") as f:
+with open("decision_tree_rules_random_map_3pit_fol.txt", "w") as f:
     f.write(tree_rules)
 
 print("Decision tree rules saved to decision_tree_rules.txt")

@@ -1,3 +1,10 @@
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent
+
+ACTION_MOVE_FORWARD = 0
+ACTION_TURN_LEFT = 1
+ACTION_TURN_RIGHT = 2
+ACTION_GRAB = 3
+ACTION_CLIMB = 4
+ACTION_SHOOT = 5
