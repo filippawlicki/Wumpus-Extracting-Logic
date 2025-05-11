@@ -2,57 +2,21 @@
 |   |--- glitter <= 0.50
 |   |   |--- breeze <= 0.50
 |   |   |   |--- hasgold <= 0.50
-|   |   |   |   |--- scream <= 0.50
-|   |   |   |   |   |--- on_entrance <= 0.50
-|   |   |   |   |   |   |--- class: Move Forward
-|   |   |   |   |   |--- on_entrance >  0.50
-|   |   |   |   |   |   |--- class: Move Forward
-|   |   |   |   |--- scream >  0.50
-|   |   |   |   |   |--- class: Move Forward
+|   |   |   |   |--- class: Move Forward
 |   |   |   |--- hasgold >  0.50
 |   |   |   |   |--- on_entrance <= 0.50
-|   |   |   |   |   |--- bump <= 0.50
-|   |   |   |   |   |   |--- class: Move Forward
-|   |   |   |   |   |--- bump >  0.50
-|   |   |   |   |   |   |--- class: Turn
+|   |   |   |   |   |--- class: Move Forward
 |   |   |   |   |--- on_entrance >  0.50
 |   |   |   |   |   |--- class: Climb
 |   |   |--- breeze >  0.50
-|   |   |   |--- bump <= 0.50
-|   |   |   |   |--- hasgold <= 0.50
-|   |   |   |   |   |--- class: Turn
-|   |   |   |   |--- hasgold >  0.50
-|   |   |   |   |   |--- scream <= 0.50
-|   |   |   |   |   |   |--- class: Turn
-|   |   |   |   |   |--- scream >  0.50
-|   |   |   |   |   |   |--- class: Turn
-|   |   |   |--- bump >  0.50
-|   |   |   |   |--- class: Turn
+|   |   |   |--- class: Turn
 |   |--- glitter >  0.50
 |   |   |--- class: Grab
 |--- stench >  0.50
 |   |--- bump <= 0.50
 |   |   |--- glitter <= 0.50
-|   |   |   |--- breeze <= 0.50
-|   |   |   |   |--- hasgold <= 0.50
-|   |   |   |   |   |--- class: Turn
-|   |   |   |   |--- hasgold >  0.50
-|   |   |   |   |   |--- class: Move Forward
-|   |   |   |--- breeze >  0.50
-|   |   |   |   |--- hasgold <= 0.50
-|   |   |   |   |   |--- class: Turn
-|   |   |   |   |--- hasgold >  0.50
-|   |   |   |   |   |--- class: Turn
+|   |   |   |--- class: Turn
 |   |   |--- glitter >  0.50
-|   |   |   |--- breeze <= 0.50
-|   |   |   |   |--- class: Grab
-|   |   |   |--- breeze >  0.50
-|   |   |   |   |--- class: Grab
+|   |   |   |--- class: Grab
 |   |--- bump >  0.50
-|   |   |--- breeze <= 0.50
-|   |   |   |--- hasgold <= 0.50
-|   |   |   |   |--- class: Turn
-|   |   |   |--- hasgold >  0.50
-|   |   |   |   |--- class: Move Forward
-|   |   |--- breeze >  0.50
-|   |   |   |--- class: Move Forward
+|   |   |--- class: Move Forward
