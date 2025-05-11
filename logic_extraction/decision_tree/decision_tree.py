@@ -5,38 +5,31 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import copy
 
-def compute_parents(tree):
-    parents = [-1] * tree.node_count  # Initialize parent array with -1
-    for i in range(tree.node_count):
-        left_child = tree.children_left[i]
-        right_child = tree.children_right[i]
-        if left_child != -1:  # If the node has a left child
-            parents[left_child] = i
-        if right_child != -1:  # If the node has a right child
-            parents[right_child] = i
-    return parents
-
 def prune_tree(org_tree: DecisionTreeClassifier):
     tree = copy.deepcopy(org_tree.tree_)
-    parents = compute_parents(tree)  # Compute parent nodes
 
-    # Prune the tree by removing leafs if they are the same class as the parent node
-    for node in range(tree.node_count):
-        if tree.children_left[node] == tree.children_right[node]:  # Leaf node
-            parent = parents[node]
-            if parent != -1 and tree.value[node].argmax() == tree.value[parent].argmax():
-                # Prune the leaf node
-                tree.children_left[parent] = -1
-                tree.children_right[parent] = -1
-                tree.value[parent] = tree.value[node]
+    nodes = range(0, tree.node_count)
+    ls = tree.children_left
+    rs = tree.children_right
+    classes = [[list(e).index(max(e)) for e in v] for v in tree.value]
 
-    org_tree = copy.deepcopy(org_tree)
-    org_tree.tree_ = tree
+    leaves = [(ls[i] == rs[i]) for i in nodes]
 
-    return org_tree
+    LEAF = -1
+    for i in reversed(nodes):
+        if leaves[i]:
+            continue
+        if leaves[ls[i]] and leaves[rs[i]] and classes[ls[i]] == classes[rs[i]]:
+            ls[i] = rs[i] = LEAF
+            leaves[i] = True
+
+    pruned_tree = copy.deepcopy(org_tree)
+    pruned_tree.tree_ = tree
+
+    return pruned_tree
 
 # Load dataset
-df = pd.read_csv("../datasets/fol_3pit_random_map_dataset.csv")
+df = pd.read_csv("../datasets/dqn_3pit_random_map_dataset.csv")
 X = df[["stench", "breeze", "glitter", "bump", "scream", "hasgold", "on_entrance"]]
 y = df["action"]
 
