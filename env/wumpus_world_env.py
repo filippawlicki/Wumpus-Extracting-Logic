@@ -35,6 +35,7 @@ class WumpusWorldEnv(gym.Env):
         self.steps_taken = 0
         # Top left corner 2x2 box is prohibited for creating the map as its the entrance
         self.prohibited_box = [(0, 0), (0, 1), (1, 0), (1, 1)]
+        self.is_possible = True
 
         self.renderer = Renderer(self)
         self.reset()
@@ -86,6 +87,39 @@ class WumpusWorldEnv(gym.Env):
 
         self.agent_pos = self.entrance
         self._update_perception()
+
+        # Check is it possible to complete the map
+        self.is_possible = False
+        # Check with DFS is there is a path from entrance to gold
+        stack = [self.entrance]
+        visited = set()
+        while stack:
+            current = stack.pop()
+            if current == self.gold_pos:
+                self.is_possible = True
+                break
+            visited.add(current)
+            for nx, ny in self._get_neighbors(current):
+                if (nx, ny) not in visited and (nx, ny) not in self.pit_pos:
+                    stack.append((nx, ny))
+
+        # if not self.is_possible:
+        #     print("Map is not possible.")
+        #     print("Map:")
+        #     for x in range(self.grid_size):
+        #         for y in range(self.grid_size):
+        #             if (x, y) == self.entrance:
+        #                 print("E", end=" ")
+        #             elif (x, y) == self.wumpus_pos:
+        #                 print("W", end=" ")
+        #             elif (x, y) == self.gold_pos:
+        #                 print("G", end=" ")
+        #             elif (x, y) in self.pit_pos:
+        #                 print("P", end=" ")
+        #             else:
+        #                 print(".", end=" ")
+        #         print()
+
 
         return self._get_observation(), {}
 
@@ -181,7 +215,10 @@ class WumpusWorldEnv(gym.Env):
                 reward = -5
             else:
                 if self.visited[new_x, new_y]:
-                    reward = -0.001 # Small penalty for revisiting a cell
+                    if self.agent_has_gold:
+                        reward = 0 # No reward for revisiting a cell with gold
+                    else:
+                        reward = -100 # Bigger penalty for revisiting a cell to encourage exploration
                 else:
                     self.visited[new_x, new_y] = True
                     reward = 50 # Small reward for visiting a new cell
