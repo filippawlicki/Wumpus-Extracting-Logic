@@ -11,9 +11,9 @@ done = False
 
 state_dim = 10
 action_dim = env.action_space.n
-agent = DQNAgent(state_dim, action_dim, epsilon=0, epsilon2=0)  # No exploration
+agent = DQNAgent(state_dim, action_dim, epsilon=0, epsilon2=0, min_epsilon=0, min_epsilon2=0)  # No exploration
 
-agent.load_model("../models/random_map_weights/model_final_3pit.pt")
+agent.load_model("../models/greedy_agent_weights/model_final.pt")
 
 dataset = []
 max_episodes = 5000
@@ -45,7 +45,7 @@ while episode < max_episodes:
     episode += 1
 
 # Save the dataset to a CSV file
-output_file = "dqn_3pit_random_map_dataset.csv"
+output_file = "dqn_greedy_agent_dataset.csv"
 header = ["stench", "breeze", "glitter", "bump", "scream", "hasgold", "on_entrance", "action"]
 
 with open(output_file, mode="w", newline="") as f:
