@@ -1,16 +1,16 @@
 from env.wumpus_world_env import WumpusWorldEnv
 from models.dqn_agent import DQNAgent
 
-env = WumpusWorldEnv(grid_size=4, default_map=False, num_of_pits=1)
+env = WumpusWorldEnv(grid_size=4, default_map=False, num_of_pits=3)
 
 obs, _ = env.reset()
 done = False
 
 state_dim = 10
 action_dim = env.action_space.n
-agent = DQNAgent(state_dim, action_dim, epsilon=0, epsilon2=0)  # No exploration
+agent = DQNAgent(state_dim, action_dim, epsilon=0, epsilon2=0, min_epsilon=0, min_epsilon2=0)  # No exploration
 
-agent.load_model("checkpoints/model_ep10059_final.pt")
+agent.load_model("checkpoints/model_ep9586_final.pt")
 
 max_episodes = 1000
 max_steps = 100
@@ -20,7 +20,10 @@ episode = 0
 print("Starting test...")
 
 while episode < max_episodes:
-    obs, _ = env.reset()
+    obs, info = env.reset()
+    possible_to_win = info["possible_to_win"]
+    if not possible_to_win:
+        continue
     done = False
     steps = 0
 

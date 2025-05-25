@@ -134,11 +134,11 @@ class DQNAgent:
 
     def load_epsilon(self, num_of_pits):
         if num_of_pits == 1:
-            self.epsilon = 0.3
-            self.epsilon2 = 0.3
+            self.epsilon = 1
+            self.epsilon2 = 1
             self.min_epsilon = 0.01
             self.min_epsilon2 = 0.01
-            self.epsilon_decay = 1e-4
+            self.epsilon_decay = 4e-5
             self.epsilon_decay2 = 2e-4
         elif num_of_pits == 2:
             self.epsilon = 0.5
@@ -148,8 +148,8 @@ class DQNAgent:
             self.epsilon_decay = 8e-5
             self.epsilon_decay2 = 8e-5
         elif num_of_pits == 3:
-            self.epsilon = 0.38
-            self.epsilon2 = 0.5
+            self.epsilon = 0.5
+            self.epsilon2 = 0.6
             self.min_epsilon = 5e-3
             self.min_epsilon2 = 0.005
             self.epsilon_decay = 7e-5

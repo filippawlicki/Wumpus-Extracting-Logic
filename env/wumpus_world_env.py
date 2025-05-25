@@ -121,7 +121,7 @@ class WumpusWorldEnv(gym.Env):
         #         print()
 
 
-        return self._get_observation(), {}
+        return self._get_observation(), {"possible_to_win": self.is_possible}
 
 
 
@@ -218,7 +218,7 @@ class WumpusWorldEnv(gym.Env):
                     if self.agent_has_gold:
                         reward = 0 # No reward for revisiting a cell with gold
                     else:
-                        reward = -100 # Bigger penalty for revisiting a cell to encourage exploration
+                        reward = -10 # Bigger penalty for revisiting a cell to encourage exploration
                 else:
                     self.visited[new_x, new_y] = True
                     reward = 50 # Small reward for visiting a new cell
