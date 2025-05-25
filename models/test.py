@@ -9,12 +9,12 @@ done = False
 state_dim = 10
 action_dim = env.action_space.n
 agent = DQNAgent(state_dim, action_dim, epsilon=0, epsilon2=0, min_epsilon=0, min_epsilon2=0)  # No exploration
-
-agent.load_model("checkpoints/model_ep9586_final.pt")
+agent.load_model("random_map_weights/model_final_3pit.pt")
 
 max_episodes = 1000
 max_steps = 100
 won_games = 0
+dead_games = 0
 
 episode = 0
 print("Starting test...")
@@ -33,6 +33,9 @@ while episode < max_episodes:
             break
 
         obs, reward, done, truncated, info = env.step(action)
+        if info["dead"]:
+            dead_games += 1
+            break
         if info["won"]:
             won_games += 1
             break
@@ -41,3 +44,4 @@ while episode < max_episodes:
     episode += 1
 
 print(f"Test completed. Won {won_games}/{max_episodes} games. Win rate: {(won_games/max_episodes):.2%}")
+print(f"Survived {max_episodes - dead_games}/{max_episodes} games. Survival rate: {(max_episodes - dead_games)/max_episodes:.2%}")

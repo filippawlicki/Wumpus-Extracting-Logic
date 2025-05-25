@@ -203,6 +203,7 @@ class WumpusWorldEnv(gym.Env):
         won = False
         log = False
         self.scream = False
+        dead = False
 
         if action == config.ACTION_MOVE_FORWARD:
             dx, dy = [(0, -1), (1, 0), (0, 1), (-1, 0)][self.agent_dir]
@@ -212,11 +213,11 @@ class WumpusWorldEnv(gym.Env):
                 self.bump = True
                 if log:
                     print("Bump into wall: -5 reward")
-                reward = -5
+                reward = -50 # Bigger penalty for bumping into a wall to encourage exploration
             else:
                 if self.visited[new_x, new_y]:
                     if self.agent_has_gold:
-                        reward = 0 # No reward for revisiting a cell with gold
+                        reward = 10 # Reward for revisiting a cell with gold (known path to entrance)
                     else:
                         reward = -10 # Bigger penalty for revisiting a cell to encourage exploration
                 else:
@@ -263,7 +264,7 @@ class WumpusWorldEnv(gym.Env):
             if self.agent_pos == self.entrance and self.agent_has_gold: # Exit with gold
                 if log:
                     print("Exit with gold: +1000 reward")
-                reward = 1000
+                reward = 10000
                 won = True
                 done = True
             elif self.agent_pos != self.entrance or not self.agent_has_gold: # Tried to climb without being at the entrance or without gold
@@ -277,11 +278,13 @@ class WumpusWorldEnv(gym.Env):
             if log:
                 print("Death by Wumpus: -1000 reward")
             reward = -1000
+            dead = True
             done = True
         elif (x, y) in self.pit_pos: # Death by pit
             if log:
                 print("Death by pit: -1000 reward")
             reward = -1000
+            dead = True
             done = True
 
         self.steps_taken += 1
@@ -291,7 +294,7 @@ class WumpusWorldEnv(gym.Env):
             reward = -1000
             done = True
 
-        return self._get_observation(), reward, done, False, {"tookGold": tookGold, "won": won}
+        return self._get_observation(), reward, done, False, {"tookGold": tookGold, "won": won, "dead": dead}
 
     def render(self):
         self.renderer.render(self._get_observation())
