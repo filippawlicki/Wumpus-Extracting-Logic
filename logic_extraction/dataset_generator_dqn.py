@@ -13,7 +13,7 @@ state_dim = 10
 action_dim = env.action_space.n
 agent = DQNAgent(state_dim, action_dim, epsilon=0, epsilon2=0, min_epsilon=0, min_epsilon2=0)  # No exploration
 
-agent.load_model("../models/greedy_agent_weights/model_final.pt")
+agent.load_model("../models/greedy_agent_weights/model_ep12000.pt")
 
 dataset = []
 max_episodes = 5000

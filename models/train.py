@@ -50,14 +50,14 @@ def save_plots(episode_rewards, episode_losses, episode_wins, episode, dir, wind
 
 
 if __name__ == "__main__":
-    env = WumpusWorldEnv(grid_size=4, default_map=False, num_of_pits=1)
+    env = WumpusWorldEnv(grid_size=4, default_map=False, num_of_pits=3)
     state_dim = 10
     action_dim = env.action_space.n
     agent = DQNAgent(state_dim, action_dim)
-    #agent.load_model("greedy_agent_weights/model_final_1pit.pt")
+    agent.load_model("greedy_agent_weights/model_ep12000.pt")
     agent.load_epsilon(env.num_of_pits) # Load epsilon values based on the number of pits
 
-    episodes = 50_000
+    episodes = 20_000
     max_steps = 100
     checkpoint_interval = 2_000
     target_update_interval = 25
@@ -77,7 +77,7 @@ if __name__ == "__main__":
         total_reward = 0
         info = {}
 
-        agent.tookGold = False # Reset tookGold flag at the start of each episode
+        agent.tookGold = False
 
         for step in range(max_steps):
             action = agent.act(state)
@@ -110,11 +110,11 @@ if __name__ == "__main__":
         if episode % target_update_interval == 0 and episode > 0:
             agent.update_target()
 
-        if len(won_history) > 50:
-            if np.mean(won_history[-50:]) >= 0.5:
-                print(f"Early stopping at episode {episode} with mean reward {np.mean(reward_history[-50:])} and win rate {np.mean(won_history[-50:])}")
-                path = os.path.join(model_dir, f"model_ep{episode}_final.pt")
-                agent.save(path)
+        # if len(won_history) > 50:
+        #     if np.mean(won_history[-50:]) >= 0.5:
+        #         print(f"Early stopping at episode {episode} with mean reward {np.mean(reward_history[-50:])} and win rate {np.mean(won_history[-50:])}")
+        #         path = os.path.join(model_dir, f"model_ep{episode}_final.pt")
+        #         agent.save(path)
 
 
         if episode % checkpoint_interval == 0 and episode > 0:

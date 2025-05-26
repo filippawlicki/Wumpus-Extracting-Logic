@@ -9,12 +9,13 @@ done = False
 state_dim = 10
 action_dim = env.action_space.n
 agent = DQNAgent(state_dim, action_dim, epsilon=0, epsilon2=0, min_epsilon=0, min_epsilon2=0)  # No exploration
-agent.load_model("random_map_weights/model_final_3pit.pt")
+agent.load_model("greedy_agent_weights/model_ep12000.pt")
 
 max_episodes = 1000
 max_steps = 100
 won_games = 0
 dead_games = 0
+not_possible_games = 0
 
 episode = 0
 print("Starting test...")
@@ -23,6 +24,7 @@ while episode < max_episodes:
     obs, info = env.reset()
     possible_to_win = info["possible_to_win"]
     if not possible_to_win:
+        not_possible_games += 1
         continue
     done = False
     steps = 0
@@ -45,3 +47,4 @@ while episode < max_episodes:
 
 print(f"Test completed. Won {won_games}/{max_episodes} games. Win rate: {(won_games/max_episodes):.2%}")
 print(f"Survived {max_episodes - dead_games}/{max_episodes} games. Survival rate: {(max_episodes - dead_games)/max_episodes:.2%}")
+print(f"Not possible to win in {not_possible_games}/{max_episodes} games. Not possible rate: {(not_possible_games/max_episodes):.2%}")

@@ -31,6 +31,7 @@ class WumpusWorldEnv(gym.Env):
         self.observation_space = gym.spaces.MultiDiscrete(10) # [Stench, Breeze, Glitter, Bump, Scream, hasgold, orientation]
         self.visited = np.zeros((self.grid_size, self.grid_size), dtype=bool)
         self.visited.fill(False)
+        self.turns_in_row = 0
         self.num_of_pits = num_of_pits
         self.steps_taken = 0
         # Top left corner 2x2 box is prohibited for creating the map as its the entrance
@@ -54,6 +55,7 @@ class WumpusWorldEnv(gym.Env):
         self.grid = np.zeros((self.grid_size, self.grid_size, 2), dtype=int) # breeze, stench, glitter
         self.visited = np.zeros((self.grid_size, self.grid_size), dtype=bool)
         self.visited.fill(False)
+        self.turns_in_row = 0
 
 
         if self.default_map:
@@ -212,27 +214,25 @@ class WumpusWorldEnv(gym.Env):
             if not (0 <= new_x < self.grid_size and 0 <= new_y < self.grid_size): # Bump into wall
                 self.bump = True
                 if log:
-                    print("Bump into wall: -5 reward")
+                    print("Bump into wall: -50 reward")
                 reward = -50 # Bigger penalty for bumping into a wall to encourage exploration
             else:
                 if self.visited[new_x, new_y]:
                     if self.agent_has_gold:
-                        reward = 10 # Reward for revisiting a cell with gold (known path to entrance)
+                        reward = 20 # Reward for revisiting a cell with gold (known path to entrance)
                     else:
-                        reward = -10 # Bigger penalty for revisiting a cell to encourage exploration
+                        reward = -20 # Bigger penalty for revisiting a cell to encourage exploration
                 else:
                     self.visited[new_x, new_y] = True
-                    reward = 50 # Small reward for visiting a new cell
+                    reward = 120 # Reward for visiting a new cell
                 self.agent_pos = new_x, new_y
 
 
         elif action == config.ACTION_TURN_LEFT:
             self.agent_dir = (self.agent_dir - 1) % 4
-            #reward = -5
 
         elif action == config.ACTION_TURN_RIGHT:
             self.agent_dir = (self.agent_dir + 1) % 4
-            #reward = -5
 
         elif action == config.ACTION_GRAB:
             if self.agent_pos == self.gold_pos and not self.agent_has_gold: # Grab gold
@@ -277,13 +277,13 @@ class WumpusWorldEnv(gym.Env):
         if self.wumpus_alive and (x, y) == self.wumpus_pos: # Death by Wumpus
             if log:
                 print("Death by Wumpus: -1000 reward")
-            reward = -1000
+            reward = -100
             dead = True
             done = True
         elif (x, y) in self.pit_pos: # Death by pit
             if log:
                 print("Death by pit: -1000 reward")
-            reward = -1000
+            reward = -100
             dead = True
             done = True
 

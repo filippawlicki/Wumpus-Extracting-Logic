@@ -4,6 +4,7 @@ from sklearn.tree import DecisionTreeClassifier, export_text, export_graphviz
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import copy
+import matplotlib.pyplot as plt
 
 def prune_tree(org_tree: DecisionTreeClassifier):
     tree = copy.deepcopy(org_tree.tree_)
@@ -59,11 +60,22 @@ dot_data = export_graphviz(
     pruned_tree,
     feature_names=list(X.columns),
     class_names=class_names,
-    filled=True,
-    label="none",  # Exclude gini, samples, and value
+    filled=True,  # Exclude gini, samples, and value
     impurity=False  # Exclude gini
 )
 (graph,) = pydot.graph_from_dot_data(dot_data)
 graph.write_png("decision_tree.png")
+
+importances = clf.feature_importances_
+#importances = [round(i, 3) for i in importances]
+plt.figure(figsize=(10, 6))
+bars = plt.barh(X.columns, importances)
+plt.bar_label(bars)
+plt.xlabel("Feature Importance")
+plt.title("Feature Importance of Decision Tree")
+plt.savefig("feature_importance.png")
+
+
+
 
 print("Decision tree rules saved to decision_tree.png")

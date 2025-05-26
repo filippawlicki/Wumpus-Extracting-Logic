@@ -136,9 +136,9 @@ class DQNAgent:
         if num_of_pits == 1:
             self.epsilon = 1
             self.epsilon2 = 1
-            self.min_epsilon = 0.01
-            self.min_epsilon2 = 0.01
-            self.epsilon_decay = 4e-5
+            self.min_epsilon = 0.1
+            self.min_epsilon2 = 0.1
+            self.epsilon_decay = 2e-4
             self.epsilon_decay2 = 2e-4
         elif num_of_pits == 2:
             self.epsilon = 0.5
