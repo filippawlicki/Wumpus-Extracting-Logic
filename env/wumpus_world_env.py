@@ -38,6 +38,10 @@ class WumpusWorldEnv(gym.Env):
         self.prohibited_box = [(0, 0), (0, 1), (1, 0), (1, 1)]
         self.is_possible = True
 
+        self.breeze_sensation_map = np.zeros((self.grid_size*2 - 1, self.grid_size*2 - 1), dtype=int)
+        self.stench_sensation_map = np.zeros((self.grid_size*2 - 1, self.grid_size*2 - 1), dtype=int)
+        self.wall_sensation_map = np.zeros((self.grid_size * 2 + 1, self.grid_size * 2 + 1), dtype=int)
+
         self.renderer = Renderer(self)
         self.reset()
 
@@ -56,6 +60,9 @@ class WumpusWorldEnv(gym.Env):
         self.visited = np.zeros((self.grid_size, self.grid_size), dtype=bool)
         self.visited.fill(False)
         self.turns_in_row = 0
+        self.breeze_sensation_map.fill(0)
+        self.stench_sensation_map.fill(0)
+        self.wall_sensation_map.fill(0)
 
 
         if self.default_map:
@@ -137,6 +144,29 @@ class WumpusWorldEnv(gym.Env):
             for nx, ny in self._get_neighbors((wx, wy)):
                 self.grid[nx, ny, 1] = 1 # Stench
 
+    def _update_sensation_maps(self):
+        x, y = self.agent_pos
+
+        # 1 for breeze, -1 for no breeze
+        if self.grid[x, y, 0] == 1:
+            self.breeze_sensation_map[x + self.grid_size - 1, y + self.grid_size - 1] = 1
+        else:
+            self.breeze_sensation_map[x + self.grid_size - 1, y + self.grid_size - 1] = -1
+
+        # 1 for stench, -1 for no stench
+        if self.grid[x, y, 1] == 1:
+            self.stench_sensation_map[x + self.grid_size - 1, y + self.grid_size - 1] = 1
+        else:
+            self.stench_sensation_map[x + self.grid_size - 1, y + self.grid_size - 1] = -1
+
+        # 1 for wall, -1 for agent position
+        self.wall_sensation_map[self.wall_sensation_map == -1] = 0  # Reset previous agent position
+        self.wall_sensation_map[x + self.grid_size, y + self.grid_size] = -1
+        if self.bump:
+            dx, dy = [(0, -1), (1, 0), (0, 1), (-1, 0)][self.agent_dir]
+            bump_x = x + dx
+            bump_y = y + dy
+            self.wall_sensation_map[bump_x + self.grid_size, bump_y + self.grid_size] = 1
 
 
     def _get_neighbors(self, pos):
@@ -177,8 +207,16 @@ class WumpusWorldEnv(gym.Env):
         posx = self.agent_pos[0]
         posy = self.agent_pos[1]
 
-        return np.array([stench, breeze, glitter, bump, scream, hasgold, entrance, orientation, posx, posy], dtype=np.float32)
+        sensation_maps = np.concatenate((
+            self.breeze_sensation_map.flatten(),
+            self.stench_sensation_map.flatten(),
+            self.wall_sensation_map.flatten()
+        )).astype(np.float32)
 
+        return np.concatenate((
+            np.array([stench, breeze, glitter, bump, scream, hasgold, entrance, orientation, posx, posy], dtype=np.float32),
+            sensation_maps
+        ))
 
     def _shoot(self):
         dx, dy = [(0, -1), (1, 0), (0, 1), (-1, 0)][self.agent_dir]
@@ -293,6 +331,8 @@ class WumpusWorldEnv(gym.Env):
                 print("Max steps reached: -1000 reward")
             reward = -1000
             done = True
+
+        self._update_sensation_maps()
 
         return self._get_observation(), reward, done, False, {"tookGold": tookGold, "won": won, "dead": dead}
 

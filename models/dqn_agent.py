@@ -73,7 +73,7 @@ class DQNAgent:
         self.memory.push(state, action, reward, next_state, done)
 
     def act(self, state):
-        if self.tookGold: # Exploration phase
+        if self.tookGold:  # Exploration phase
             if random.random() < self.epsilon2:
                 return random.randint(0, self.action_dim - 1)
         else:
