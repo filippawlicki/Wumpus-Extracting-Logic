@@ -1,6 +1,7 @@
 import csv
 import pygame
 
+import config
 from env.wumpus_world_env import WumpusWorldEnv
 from models.dqn_agent import DQNAgent
 
@@ -9,11 +10,11 @@ env = WumpusWorldEnv(grid_size=4, default_map=False, num_of_pits=3)
 obs, _ = env.reset()
 done = False
 
-state_dim = 10
+state_dim = config.STATE_DIM
 action_dim = env.action_space.n
 agent = DQNAgent(state_dim, action_dim, epsilon=0, epsilon2=0, min_epsilon=0, min_epsilon2=0)  # No exploration
 
-agent.load_model("../models/greedy_agent_weights/model_ep12000.pt")
+agent.load_model("../models/sensation_agent_weights/model_final_1-2-3pit.pt")
 
 dataset = []
 max_episodes = 5000
@@ -45,7 +46,7 @@ while episode < max_episodes:
     episode += 1
 
 # Save the dataset to a CSV file
-output_file = "dqn_greedy_agent_dataset.csv"
+output_file = "datasets/sensation_agent_1-2-3pit_dataset.csv"
 header = ["stench", "breeze", "glitter", "bump", "scream", "hasgold", "on_entrance", "action"]
 
 with open(output_file, mode="w", newline="") as f:

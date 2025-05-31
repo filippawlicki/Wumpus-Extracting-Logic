@@ -30,7 +30,7 @@ def prune_tree(org_tree: DecisionTreeClassifier):
     return pruned_tree
 
 # Load dataset
-df = pd.read_csv("../datasets/dqn_greedy_agent_dataset.csv")
+df = pd.read_csv("../datasets/sensation_agent_1pit_on_3pit_dataset.csv")
 X = df[["stench", "breeze", "glitter", "bump", "scream", "hasgold", "on_entrance"]]
 y = df["action"]
 
