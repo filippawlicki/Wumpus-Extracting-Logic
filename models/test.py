@@ -10,7 +10,7 @@ done = False
 state_dim = config.STATE_DIM
 action_dim = env.action_space.n
 agent = DQNAgent(state_dim, action_dim, epsilon=0, epsilon2=0, min_epsilon=0, min_epsilon2=0)  # No exploration
-agent.load_model("checkpoints/model_ep20000.pt")
+agent.load_model("checkpoints/model_final_1-2-3pit.pt")
 
 max_episodes = 5000
 max_steps = 100

@@ -56,7 +56,7 @@ if __name__ == "__main__":
     state_dim = config.STATE_DIM
     action_dim = env.action_space.n
     agent = DQNAgent(state_dim, action_dim)
-    # agent.load_model("greedy_agent_weights/model_ep12000.pt")
+    agent.load_model("sensation_agent_weights/model_final_1-2-3pit.pt")
     agent.load_epsilon(env.num_of_pits) # Load epsilon values based on the number of pits
 
     episodes = 20_000
@@ -141,7 +141,7 @@ if __name__ == "__main__":
             save_plots(reward_history, loss_history, won_history, episode, model_dir)
 
     print(f"Training completed in {((time.time() - start_checkpoint)/60):.2f} minutes.")
-    path = os.path.join(model_dir, "model_ep20000.pt")
+    path = os.path.join(model_dir, "model_final_1-2-3pit.pt")
     agent.save(path)
     print(f"Final model saved to {path}")
     save_plots(reward_history, loss_history, won_history, "final", model_dir)

@@ -16,7 +16,7 @@ state_dim = config.STATE_DIM
 action_dim = env.action_space.n
 agent = DQNAgent(state_dim, action_dim, epsilon=0, epsilon2=0, min_epsilon=0, min_epsilon2=0) # No exploration
 
-agent.load("models/sensation_agent_weights/model_ep20000.pt")
+agent.load("models/sensation_agent_weights/model_final_2pit.pt")
 
 max_steps = 100
 steps = 0
