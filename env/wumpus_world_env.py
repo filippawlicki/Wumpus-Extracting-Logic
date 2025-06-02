@@ -11,7 +11,7 @@ class WumpusWorldEnv(gym.Env):
     Wumpus World Environment for reinforcement learning.
     """
 
-    def __init__(self, grid_size=4, default_map=True, num_of_pits=3):
+    def __init__(self, grid_size=4, default_map=True, num_of_pits=3, sensation_maps=True):
         super(WumpusWorldEnv, self).__init__()
         self.bump = False
         self.scream = False
@@ -27,8 +27,8 @@ class WumpusWorldEnv(gym.Env):
         self.grid_size = grid_size
         self.grid = None
         self.default_map = default_map
+        self.sensation_maps = sensation_maps
         self.action_space = gym.spaces.Discrete(6)
-        self.observation_space = gym.spaces.MultiDiscrete(10) # [Stench, Breeze, Glitter, Bump, Scream, hasgold, orientation]
         self.visited = np.zeros((self.grid_size, self.grid_size), dtype=bool)
         self.visited.fill(False)
         self.turns_in_row = 0
@@ -38,9 +38,14 @@ class WumpusWorldEnv(gym.Env):
         self.prohibited_box = [(0, 0), (0, 1), (1, 0), (1, 1)]
         self.is_possible = True
 
-        self.breeze_sensation_map = np.zeros((self.grid_size*2 - 1, self.grid_size*2 - 1), dtype=int)
-        self.stench_sensation_map = np.zeros((self.grid_size*2 - 1, self.grid_size*2 - 1), dtype=int)
-        self.wall_sensation_map = np.zeros((self.grid_size * 2 + 1, self.grid_size * 2 + 1), dtype=int)
+        if self.sensation_maps:
+            state_dim_size = ((self.grid_size*2 - 1) ** 2) * 2 + (self.grid_size*2 + 1) ** 2 + 10
+            self.observation_space = gym.spaces.Box(low=-1, high=1, shape=(state_dim_size,), dtype=np.float32)
+            self.breeze_sensation_map = np.zeros((self.grid_size*2 - 1, self.grid_size*2 - 1), dtype=int)
+            self.stench_sensation_map = np.zeros((self.grid_size*2 - 1, self.grid_size*2 - 1), dtype=int)
+            self.wall_sensation_map = np.zeros((self.grid_size*2 + 1, self.grid_size*2 + 1), dtype=int)
+        else:
+            self.observation_space = gym.spaces.Box(low=0, high=1, shape=(10,), dtype=np.float32)
 
         self.renderer = Renderer(self)
         self.reset()
@@ -60,9 +65,10 @@ class WumpusWorldEnv(gym.Env):
         self.visited = np.zeros((self.grid_size, self.grid_size), dtype=bool)
         self.visited.fill(False)
         self.turns_in_row = 0
-        self.breeze_sensation_map.fill(0)
-        self.stench_sensation_map.fill(0)
-        self.wall_sensation_map.fill(0)
+        if self.sensation_maps:
+            self.breeze_sensation_map.fill(0)
+            self.stench_sensation_map.fill(0)
+            self.wall_sensation_map.fill(0)
 
 
         if self.default_map:
@@ -207,16 +213,18 @@ class WumpusWorldEnv(gym.Env):
         posx = self.agent_pos[0]
         posy = self.agent_pos[1]
 
-        sensation_maps = np.concatenate((
-            self.breeze_sensation_map.flatten(),
-            self.stench_sensation_map.flatten(),
-            self.wall_sensation_map.flatten()
-        )).astype(np.float32)
-
-        return np.concatenate((
-            np.array([stench, breeze, glitter, bump, scream, hasgold, entrance, orientation, posx, posy], dtype=np.float32),
-            sensation_maps
-        ))
+        if self.sensation_maps:
+            sensation_maps = np.concatenate((
+                self.breeze_sensation_map.flatten(),
+                self.stench_sensation_map.flatten(),
+                self.wall_sensation_map.flatten()
+            )).astype(np.float32)
+            return np.concatenate((
+                np.array([stench, breeze, glitter, bump, scream, hasgold, entrance, orientation, posx, posy], dtype=np.float32),
+                sensation_maps
+            ))
+        else:
+            return np.array([stench, breeze, glitter, bump, scream, hasgold, entrance, orientation, posx, posy], dtype=np.float32)
 
     def _shoot(self):
         dx, dy = [(0, -1), (1, 0), (0, 1), (-1, 0)][self.agent_dir]
@@ -332,7 +340,8 @@ class WumpusWorldEnv(gym.Env):
             reward = -1000
             done = True
 
-        self._update_sensation_maps()
+        if self.sensation_maps:
+            self._update_sensation_maps()
 
         return self._get_observation(), reward, done, False, {"tookGold": tookGold, "won": won, "dead": dead}
 

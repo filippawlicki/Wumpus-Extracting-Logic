@@ -30,13 +30,13 @@ def prune_tree(org_tree: DecisionTreeClassifier):
     return pruned_tree
 
 # Load dataset
-df = pd.read_csv("../datasets/sensation_agent_1pit_on_3pit_dataset.csv")
+df = pd.read_csv("../datasets/sensation_agent_1-2-3pit_dataset.csv")
 X = df[["stench", "breeze", "glitter", "bump", "scream", "hasgold", "on_entrance"]]
 y = df["action"]
 
 # Split and train
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-clf = DecisionTreeClassifier(max_depth=36)
+clf = DecisionTreeClassifier(max_depth=36, min_samples_leaf=10)
 clf.fit(X_train, y_train)
 
 # Evaluate
@@ -67,7 +67,7 @@ dot_data = export_graphviz(
 graph.write_png("decision_tree.png")
 
 importances = clf.feature_importances_
-#importances = [round(i, 3) for i in importances]
+importances = [round(i, 3) for i in importances]
 plt.figure(figsize=(10, 6))
 bars = plt.barh(X.columns, importances)
 plt.bar_label(bars)

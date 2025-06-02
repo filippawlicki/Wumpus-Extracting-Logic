@@ -52,11 +52,11 @@ def save_plots(episode_rewards, episode_losses, episode_wins, episode, dir, wind
 
 
 if __name__ == "__main__":
-    env = WumpusWorldEnv(grid_size=config.GRID_SIZE, default_map=False, num_of_pits=3)
-    state_dim = config.STATE_DIM
+    env = WumpusWorldEnv(grid_size=config.GRID_SIZE, default_map=False, num_of_pits=3, sensation_maps=True)
+    state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
     agent = DQNAgent(state_dim, action_dim)
-    agent.load_model("sensation_agent_weights/model_final_1-2-3pit.pt")
+    #agent.load_model("sensation_agent_weights/model_final_1-2-3pit.pt")
     agent.load_epsilon(env.num_of_pits) # Load epsilon values based on the number of pits
 
     episodes = 20_000
