@@ -4,8 +4,6 @@ import random
 from env.render import Renderer
 import config
 
-
-
 class WumpusWorldEnv(gym.Env):
     """
     Wumpus World Environment for reinforcement learning.
@@ -34,7 +32,7 @@ class WumpusWorldEnv(gym.Env):
         self.turns_in_row = 0
         self.num_of_pits = num_of_pits
         self.steps_taken = 0
-        # Top left corner 2x2 box is prohibited for creating the map as its the entrance
+        # Top left corner 2x2 box is prohibited for creating the map as it is the entrance
         self.prohibited_box = [(0, 0), (0, 1), (1, 0), (1, 1)]
         self.is_possible = True
 

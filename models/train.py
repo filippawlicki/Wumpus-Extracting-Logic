@@ -52,7 +52,7 @@ def save_plots(episode_rewards, episode_losses, episode_wins, episode, dir, wind
 
 
 if __name__ == "__main__":
-    env = WumpusWorldEnv(grid_size=config.GRID_SIZE, default_map=False, num_of_pits=3, sensation_maps=True)
+    env = WumpusWorldEnv(grid_size=4, default_map=False, num_of_pits=3, sensation_maps=True)
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
     agent = DQNAgent(state_dim, action_dim)

@@ -182,7 +182,7 @@ if __name__ == "__main__":
     deadCount = 0
     notPossibleCount = 0
     steps_to_win = []
-    env = WumpusWorldEnv(default_map=default_map, num_of_pits=3)
+    env = WumpusWorldEnv(grid_size=4, default_map=default_map, num_of_pits=3, sensation_maps=False)
 
     for i in range(GAME_COUNT) if testing else range(1):
         _, info = env.reset()
