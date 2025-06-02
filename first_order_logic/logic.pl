@@ -12,6 +12,12 @@
 :- dynamic grid_size/1.
 :- dynamic log/1.
 
+adj(-4, -3).
+adj(-3, -4).
+adj(-3, -2).
+adj(-2, -3).
+adj(-2, -1).
+adj(-1, -2).
 adj(-1, 0).
 adj(0, -1).
 adj(0, 1).

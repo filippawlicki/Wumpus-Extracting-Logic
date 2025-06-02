@@ -1,3 +1,5 @@
+import numpy as np
+from matplotlib import pyplot as plt
 from pyswip import Prolog
 import time
 
@@ -111,9 +113,9 @@ class FOLAgent:
         elif action == config.ACTION_SHOOT:
             list(self.prolog.query(f"retract(wumpus({self.env.wumpus_pos[0]}, {self.env.wumpus_pos[1]}))"))
 
-        obs, _, _, _, feedback = self.env.step(action)
+        obs, _, _, _, info = self.env.step(action)
 
-        return obs, feedback["won"]
+        return obs, info
 
     def render_environment(self):
         self.env.render()
@@ -121,15 +123,12 @@ class FOLAgent:
         # input("Press Enter to continue...")  # Wait for user input after rendering
 
     def run(self):
-        done = False
-
         for i in range(self.max_steps):
-            action, has_won, _ = self.act()
-            if has_won:
-                done = True
+            action, info, _ = self.act()
+            if info["won"]:
                 break
 
-        return 1 if done else 0
+        return info
 
     def act(self):
         # Render the environment at each step
@@ -150,27 +149,67 @@ class FOLAgent:
         }
         action_int = action_map[action]
 
-        obs, has_won = self.execute_action(action_int)
+        obs, info = self.execute_action(action_int)
 
         self.update_kb(obs)
         self.state_counter += 1
         self.update_agent_position_and_orientation()
 
-        return action_int, has_won, obs
+        return action_int, info, obs
 
+
+def save_steps_plot(steps_to_win):
+    """ Save a histogram showing the distribution of steps needed to win. """
+    plt.figure(figsize=(12, 6))
+
+    min_steps = min(steps_to_win)
+    max_steps = max(steps_to_win)
+
+    bins = np.arange(min_steps, max(steps_to_win) + 2) - 0.5
+    plt.hist(steps_to_win, bins=bins, color='blue', alpha=0.7, rwidth=0.85)
+
+    plt.xlabel('Number of Steps to Win')
+    plt.ylabel('Number of Games')
+    plt.title('Distribution of Steps Needed to Win')
+
+    step = max(1, (max_steps - min_steps) // 20)
+    plt.xticks(np.arange(min_steps, max(steps_to_win) + 1, step=step))
+    plt.tight_layout()
+    plt.savefig(f"steps_to_win_distribution.png")
+    plt.close()
 
 if __name__ == "__main__":
     rendering = False
     default_map = False
+    testing = True
     log = False
-    GAME_COUNT = 10_000
+    GAME_COUNT = 1_000
     winCount = 0
-    for _ in range(GAME_COUNT) if not rendering else range(1):
-        env = WumpusWorldEnv(default_map=default_map, num_of_pits=3)
+    deadCount = 0
+    possibleCount = 0
+    steps_to_win = []
+    env = WumpusWorldEnv(default_map=default_map, num_of_pits=3)
+
+    for _ in range(GAME_COUNT) if testing else range(1):
+        _, info = env.reset()
+        if not info["possible_to_win"]:
+            possibleCount += 1
+            continue
         agent = FOLAgent(env, rendering=rendering, log=log)
-        win = agent.run()
-        winCount += win
-    if not rendering:
-        print(f"{GAME_COUNT} games finished. Win rate: {winCount/GAME_COUNT * 100:.2f}%")
+        info = agent.run()
+        if info["won"]:
+            steps_to_win.append(agent.state_counter)
+            winCount += 1
+        if info["dead"]:
+            deadCount += 1
+    if testing:
+        print(f"Test completed. Won {winCount}/{GAME_COUNT} games. Win rate: {winCount/GAME_COUNT * 100:.2f}%")
+        print(f"Survived {GAME_COUNT - deadCount}/{GAME_COUNT} games. Survival rate: {(GAME_COUNT - deadCount) / GAME_COUNT:.2%}")
+        print(f"Not possible to win in {possibleCount}/{GAME_COUNT} games. Not possible rate: {(possibleCount / GAME_COUNT):.2%}")
+
+        if steps_to_win:
+            save_steps_plot(steps_to_win)
+        else:
+            print("No games were won, no steps to plot.")
     else:
         print(f"Game finished.")
