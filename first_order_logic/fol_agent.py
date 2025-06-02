@@ -30,11 +30,9 @@ class FOLAgent:
         list(self.prolog.query("retractall(pit(_, _))"))
         list(self.prolog.query("retractall(gold(_, _))"))
         list(self.prolog.query("retractall(agent(_, _, _))"))
-        list(self.prolog.query("retractall(start(_, _))"))
         list(self.prolog.query("retractall(orientation(_, _))"))
         list(self.prolog.query("retractall(kb(_, _, _, _))"))
         list(self.prolog.query("retractall(result(_, _))"))
-        list(self.prolog.query("retractall(grid_size(_))"))
         list(self.prolog.query("retractall(log(_))"))
 
         # Add Wumpus position
@@ -54,12 +52,7 @@ class FOLAgent:
         self.prolog.assertz(f"agent({ax}, {ay}, {self.state_counter})")
         self.prolog.assertz(f"orientation({['north', 'east', 'south', 'west'][self.env.agent_dir]}, {self.state_counter})")
 
-        # Add starting position
-        sx, sy = self.env.entrance
-        self.prolog.assertz(f"start({sx}, {sy})")
-
         size = self.env.grid_size
-        self.prolog.assertz(f"grid_size({size})")
 
         # Initialize knowledge base
         list(self.prolog.query(f"initialize_kb({size})"))
@@ -183,17 +176,18 @@ if __name__ == "__main__":
     default_map = False
     testing = True
     log = False
-    GAME_COUNT = 1_000
+    GAME_COUNT = 5_000
+    checkpoint_interval = 100
     winCount = 0
     deadCount = 0
-    possibleCount = 0
+    notPossibleCount = 0
     steps_to_win = []
     env = WumpusWorldEnv(default_map=default_map, num_of_pits=3)
 
-    for _ in range(GAME_COUNT) if testing else range(1):
+    for i in range(GAME_COUNT) if testing else range(1):
         _, info = env.reset()
         if not info["possible_to_win"]:
-            possibleCount += 1
+            notPossibleCount += 1
             continue
         agent = FOLAgent(env, rendering=rendering, log=log)
         info = agent.run()
@@ -202,10 +196,13 @@ if __name__ == "__main__":
             winCount += 1
         if info["dead"]:
             deadCount += 1
+
+        if testing and i % checkpoint_interval == 0:
+            print(f"Game {i + 1}/{GAME_COUNT} completed. Won: {winCount}, Dead: {deadCount}, Possible to win: {notPossibleCount}")
     if testing:
         print(f"Test completed. Won {winCount}/{GAME_COUNT} games. Win rate: {winCount/GAME_COUNT * 100:.2f}%")
         print(f"Survived {GAME_COUNT - deadCount}/{GAME_COUNT} games. Survival rate: {(GAME_COUNT - deadCount) / GAME_COUNT:.2%}")
-        print(f"Not possible to win in {possibleCount}/{GAME_COUNT} games. Not possible rate: {(possibleCount / GAME_COUNT):.2%}")
+        print(f"Not possible to win in {notPossibleCount}/{GAME_COUNT} games. Not possible rate: {(notPossibleCount / GAME_COUNT):.2%}")
 
         if steps_to_win:
             save_steps_plot(steps_to_win)

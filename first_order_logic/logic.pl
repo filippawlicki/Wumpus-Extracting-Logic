@@ -5,11 +5,9 @@
 :- dynamic pit/2.
 :- dynamic gold/2.
 :- dynamic agent/3.
-:- dynamic start/2.
 :- dynamic orientation/2.
 :- dynamic kb/4.
 :- dynamic result/2.
-:- dynamic grid_size/1.
 :- dynamic log/1.
 
 adj(-4, -3).
@@ -74,63 +72,56 @@ make_decision(Action, S) :-
 	    ),
 	    nl
 	;   true),
-    (holding(gold, S), start(X, Y) ->
+    (holding(gold, S), kb(X, Y, start, true) ->
         Action = climb,
         (log(true) -> write('climbing out'), nl; true)
-    ;   false, holding(gold, S) ->
-            (previous_cell(NX, NY, S) ->
-                Action = move,
-                (log(true) -> write('moving to prev cell'), nl; true)
-            ;   Action = turn_left,
-                (log(true) -> write('turning to prev cell...'), nl; true)
-            )
-        ;   glitter(X, Y) -> 
-                Action = grab,
-                (log(true) -> write('grabbing gold'), nl; true)
-            ;   wumpus_targeted(X, Y, Dir) ->
-                    Action = shoot,
-                    (log(true) -> write('shooting'), nl; true)
-                ;   \+ valid_cell(NX, NY) ->
-                        Action = turn_left,
-                        (log(true) -> write('bumped, turning left'), nl; true)
-                    ;   good_cell(NX, NY, S) -> 
-                            Action = move,
-                            (log(true) -> write('moving to good cell'), nl; true)
-                        ;   once((adjacent(X, Y, GX, GY), good_cell(GX, GY, S))) -> 
-                                (cell_right(X, Y, Dir, RX, RY),
-                                good_cell(RX, RY, S) ->
-                                    Action = turn_right,
-                                    (log(true) -> write('turning to right good cell...'), nl; true)
-                                ;   Action = turn_left,
-                                    (log(true) -> write('turning to left good cell...'), nl; true)
-                                )
-                            ;   medium_cell(NX, NY) -> 
-                                    Action = move,
-                                    (log(true) -> write('moving to medium cell'), nl; true)
-                                ;   once((adjacent(X, Y, MX, MY), medium_cell(MX, MY))) -> 
-                                        (cell_right(X, Y, Dir, RX, RY),
-                                        medium_cell(RX, RY) ->
-                                            Action = turn_right,
-                                            (log(true) -> write('turning to right medium cell...'), nl; true)
-                                        ;   Action = turn_left,
-                                            (log(true) -> write('turning to left medium cell...'), nl; true)
-                                        )
-                                    ;   risky_cell(NX, NY) -> 
-                                            Action = move,
-                                            (log(true) -> write('moving to risky cell'), nl; true)
-                                        ;   once((adjacent(X, Y, RX, RY), risky_cell(RX, RY))) -> 
-                                                (cell_right(X, Y, Dir, RX, RY),
-                                                risky_cell(RX, RY) ->
-                                                    Action = turn_right,
-                                                    (log(true) -> write('turning to right good cell...'), nl; true)
-                                                ;   Action = turn_left,
-                                                    (log(true) -> write('turning to left good cell...'), nl; true)
-                                                )
-                                            ;   deadly_cell(NX, NY) -> 
-                                                    Action = move,
-                                                    (log(true) -> write('moving to deadly cell'), nl; true)
-                                                ;   Action = turn_left,
-                                                    (log(true) -> write('turning to deadly cell...'), nl; true)
+    ;   kb(X, Y, glitter, true) ->
+            Action = grab,
+            (log(true) -> write('grabbing gold'), nl; true)
+        ;   wumpus_targeted(X, Y, Dir) ->
+                Action = shoot,
+                (log(true) -> write('shooting'), nl; true)
+            ;   \+ valid_cell(NX, NY) ->
+                    Action = turn_left,
+                    (log(true) -> write('bumped, turning left'), nl; true)
+                ;   good_cell(NX, NY, S) ->
+                        Action = move,
+                        (log(true) -> write('moving to good cell'), nl; true)
+                    ;   once((adjacent(X, Y, GX, GY), good_cell(GX, GY, S))) ->
+                            (cell_right(X, Y, Dir, RX, RY),
+                            good_cell(RX, RY, S) ->
+                                Action = turn_right,
+                                (log(true) -> write('turning to right good cell...'), nl; true)
+                            ;   Action = turn_left,
+                                (log(true) -> write('turning to left good cell...'), nl; true)
+                            )
+                        ;   medium_cell(NX, NY) ->
+                                Action = move,
+                                (log(true) -> write('moving to medium cell'), nl; true)
+                            ;   once((adjacent(X, Y, MX, MY), medium_cell(MX, MY))) ->
+                                    (cell_right(X, Y, Dir, RX, RY),
+                                    medium_cell(RX, RY) ->
+                                        Action = turn_right,
+                                        (log(true) -> write('turning to right medium cell...'), nl; true)
+                                    ;   Action = turn_left,
+                                        (log(true) -> write('turning to left medium cell...'), nl; true)
+                                    )
+                                ;   risky_cell(NX, NY) ->
+                                        Action = move,
+                                        (log(true) -> write('moving to risky cell'), nl; true)
+                                    ;   once((adjacent(X, Y, RX, RY), risky_cell(RX, RY))) ->
+                                            (cell_right(X, Y, Dir, RX, RY),
+                                            risky_cell(RX, RY) ->
+                                                Action = turn_right,
+                                                (log(true) -> write('turning to right good cell...'), nl; true)
+                                            ;   Action = turn_left,
+                                                (log(true) -> write('turning to left good cell...'), nl; true)
+                                            )
+                                        ;   deadly_cell(NX, NY) ->
+                                                Action = move,
+                                                (log(true) -> write('moving to deadly cell'), nl; true)
+                                            ;   Action = turn_left,
+                                                (log(true) -> write('turning to deadly cell...'), nl; true)
     ).
 
 
@@ -154,24 +145,6 @@ has_shot(S) :-
 	has_shot(SPrev).
 
 
-% Get the previous position of the agent based on the state S
-previous_position(PrevX, PrevY, S) :-
-    S > 0,
-    SPrev is S - 1,
-    agent(PrevX, PrevY, SPrev).
-
-% Get the previous cell of the agent based on the state S
-previous_cell(PrevX, PrevY, S) :-
-    previous_position(PrevX, PrevY, S),
-    agent(CurrX, CurrY, S),
-    (PrevX \= CurrX; PrevY \= CurrY).
-
-previous_cell(PrevX, PrevY, S) :-
-    S > 0,
-    SPrev is S - 1,
-    previous_cell(PrevX, PrevY, SPrev).
-
-
 % KNOWLEDGE BASE (KB)
 
 % Initialize the knowledge base for all cells
@@ -186,7 +159,11 @@ initialize_kb(GridSize) :-
                    assert(kb(X, Y, wumpus, unknown)),
                    assert(kb(X, Y, glitter, unknown)),
                    assert(kb(X, Y, wall, unknown))
-                   ))).
+                   ))
+           ),
+    agent(StartX, StartY, 0),
+    assert(kb(StartX, StartY, start, true)).
+
 
 % Update the knowledge base based on the agent's current position and perceptions
 update_kb(X, Y, Perceptions, S) :-
