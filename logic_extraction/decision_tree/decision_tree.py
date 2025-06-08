@@ -29,53 +29,54 @@ def prune_tree(org_tree: DecisionTreeClassifier):
 
     return pruned_tree
 
-# Load dataset
-df = pd.read_csv("../datasets/sensation_agent_1-2-3pit_dataset.csv")
-X = df[["stench", "breeze", "glitter", "bump", "scream", "hasgold", "on_entrance"]]
-y = df["action"]
+if __name__ == "__main__":
+    # Load dataset
+    df = pd.read_csv("../datasets/dqn_3pit_random_map_dataset.csv")
+    X = df[["stench", "breeze", "glitter", "bump", "scream", "hasgold", "on_entrance"]]
+    y = df["action"]
 
-# Split and train
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-clf = DecisionTreeClassifier(max_depth=36, min_samples_leaf=10)
-clf.fit(X_train, y_train)
+    # Split and train
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    clf = DecisionTreeClassifier(max_depth=36, min_samples_leaf=10)
+    clf.fit(X_train, y_train)
 
-# Evaluate
-y_pred = clf.predict(X_test)
-print(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
+    # Evaluate
+    y_pred = clf.predict(X_test)
+    print(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
 
-# Save logic extraction rules
-unique_classes = sorted(y.unique())
-class_names_map = {
-    0: "Move Forward",
-    1: "Turn",
-    2: "Grab",
-    3: "Climb",
-    4: "Shoot"
-}
-class_names = [class_names_map[i] for i in unique_classes]
+    # Save logic extraction rules
+    unique_classes = sorted(y.unique())
+    class_names_map = {
+        0: "Move Forward",
+        1: "Turn",
+        2: "Grab",
+        3: "Climb",
+        4: "Shoot"
+    }
+    class_names = [class_names_map[i] for i in unique_classes]
 
-pruned_tree = prune_tree(clf)
+    pruned_tree = prune_tree(clf)
 
-dot_data = export_graphviz(
-    pruned_tree,
-    feature_names=list(X.columns),
-    class_names=class_names,
-    filled=True,  # Exclude gini, samples, and value
-    impurity=False  # Exclude gini
-)
-(graph,) = pydot.graph_from_dot_data(dot_data)
-graph.write_png("decision_tree.png")
+    dot_data = export_graphviz(
+        pruned_tree,
+        feature_names=list(X.columns),
+        class_names=class_names,
+        filled=True,  # Exclude gini, samples, and value
+        impurity=False  # Exclude gini
+    )
+    (graph,) = pydot.graph_from_dot_data(dot_data)
+    graph.write_png("decision_tree.png")
 
-importances = clf.feature_importances_
-importances = [round(i, 3) for i in importances]
-plt.figure(figsize=(10, 6))
-bars = plt.barh(X.columns, importances)
-plt.bar_label(bars)
-plt.xlabel("Feature Importance")
-plt.title("Feature Importance of Decision Tree")
-plt.savefig("feature_importance.png")
-
-
+    importances = clf.feature_importances_
+    importances = [round(i, 3) for i in importances]
+    plt.figure(figsize=(10, 6))
+    bars = plt.barh(X.columns, importances)
+    plt.bar_label(bars)
+    plt.xlabel("Feature Importance")
+    plt.title("Feature Importance of Decision Tree")
+    plt.savefig("feature_importance.png")
 
 
-print("Decision tree rules saved to decision_tree.png")
+
+
+    print("Decision tree rules saved to decision_tree.png")
