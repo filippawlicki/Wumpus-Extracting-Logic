@@ -124,7 +124,7 @@ def calculate_tree_depths(tree: DecisionTreeClassifier):
 
 # Print similar rules
 for rule_a, rule_b, sim in readable_similar_rules:
-    print(f"Rule A: {rule_a}\nRule B: {rule_b}\nSimilarity: {sim}\n")
+    print(f"Rule A: {rule_a}\nRule B: {rule_b}\nSimilarity: {sim}")
     print("-" * 80)
 
 print(f"Total similar rules found: {len(readable_similar_rules)}")
