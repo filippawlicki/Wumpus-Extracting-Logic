@@ -83,7 +83,7 @@ def jaccard_similarity_with_action(rule_a, action_a, rule_b, action_b):
 similar_rules = []
 for (rule_a, action_a), (rule_b, action_b) in product(rules_1, rules_2):
     sim = jaccard_similarity_with_action(rule_a, action_a, rule_b, action_b)
-    if sim > 0.5:
+    if sim >= 0.6:
         similar_rules.append((rule_a, rule_b, sim, action_a))
 
 # Format rules for readability
