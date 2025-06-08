@@ -31,7 +31,7 @@ def prune_tree(org_tree: DecisionTreeClassifier):
 
 if __name__ == "__main__":
     # Load dataset
-    df = pd.read_csv("../datasets/dqn_3pit_random_map_dataset.csv")
+    df = pd.read_csv("../datasets/dqn_greedy_agent_dataset.csv")
     X = df[["stench", "breeze", "glitter", "bump", "scream", "hasgold", "on_entrance"]]
     y = df["action"]
 

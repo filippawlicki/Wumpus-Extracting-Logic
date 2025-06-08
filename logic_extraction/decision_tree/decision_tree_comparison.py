@@ -95,6 +95,25 @@ readable_similar_rules = [
     for a, b, sim, action in similar_rules
 ]
 
+# Calculate max depth and average depth of the tree
+def calculate_tree_depths(tree: DecisionTreeClassifier):
+    tree_ = tree.tree_
+    depths = []
+
+    def recurse(node, depth):
+        if tree_.children_left[node] == tree_.children_right[node]:  # Leaf node
+            depths.append(depth)
+        else:
+            if tree_.children_left[node] != -1:
+                recurse(tree_.children_left[node], depth + 1)
+            if tree_.children_right[node] != -1:
+                recurse(tree_.children_right[node], depth + 1)
+
+    recurse(0, 0)
+    max_depth = max(depths)
+    avg_depth = sum(depths) / len(depths)
+    return max_depth, avg_depth
+
 # Print similar rules
 for rule_a, rule_b, sim in readable_similar_rules:
     print(f"Rule A: {rule_a}\nRule B: {rule_b}\nSimilarity: {sim}\n")
@@ -103,3 +122,11 @@ for rule_a, rule_b, sim in readable_similar_rules:
 print(f"Total similar rules found: {len(readable_similar_rules)}")
 print("Total rules in Model 1:", len(rules_1))
 print("Total rules in Model 2:", len(rules_2))
+
+# Calculate depths for both trees
+max_depth_1, avg_depth_1 = calculate_tree_depths(clf1)
+max_depth_2, avg_depth_2 = calculate_tree_depths(clf2)
+
+# Print the results
+print(f"Model 1 - Max Depth: {max_depth_1}, Average Depth: {avg_depth_1:.2f}")
+print(f"Model 2 - Max Depth: {max_depth_2}, Average Depth: {avg_depth_2:.2f}")
