@@ -65,7 +65,7 @@ class DQNAgent:
 
 
     def load_model(self, model_path):
-        self.q_net.load_state_dict(torch.load(model_path))
+        self.q_net.load_state_dict(torch.load(model_path, map_location=self.device))
         self.target_net.load_state_dict(self.q_net.state_dict())
         self.target_net.eval()
 

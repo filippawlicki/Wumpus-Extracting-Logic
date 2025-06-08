@@ -24,7 +24,7 @@ def save_steps_plot(steps_to_win):
 
 
 if __name__ == "__main__":
-    env = WumpusWorldEnv(grid_size=4, default_map=False, num_of_pits=3, sensation_maps=True)
+    env = WumpusWorldEnv(grid_size=4, default_map=False, num_of_pits=3, sensation_maps=False)
 
     obs, _ = env.reset()
     done = False
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
     agent = DQNAgent(state_dim, action_dim, epsilon=0, epsilon2=0, min_epsilon=0, min_epsilon2=0)  # No exploration
-    agent.load_model("sensation_agent_weights/model_final_1-2-3pit.pt")
+    agent.load_model("greedy_agent_weights/model_final.pt")
 
     max_episodes = 5000
     max_steps = 100
