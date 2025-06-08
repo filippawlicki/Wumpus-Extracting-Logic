@@ -29,6 +29,14 @@ clf2.fit(X_train2, y_train2)
 clf1 = prune_tree(clf1)
 clf2 = prune_tree(clf2)
 
+class_names = {
+  0: "Move Forward",
+  1: "Turn",
+  2: "Grab",
+  3: "Climb",
+  4: "Shoot"
+}
+
 # Helper function to extract rules from a decision tree
 def extract_rules(tree: DecisionTreeClassifier, feature_names):
   tree_ = tree.tree_
@@ -63,7 +71,7 @@ def extract_rules(tree: DecisionTreeClassifier, feature_names):
       recurse(ls[node], path + [(name, "<=", threshold)])
       recurse(rs[node], path + [(name, ">", threshold)])
     else:  # If a leaf
-      action = classes[node][0]
+      action = class_names[classes[node][0]]
       paths.append((frozenset(path), action))
 
   recurse(0, [])
