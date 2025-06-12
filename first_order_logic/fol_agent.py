@@ -12,15 +12,9 @@ class FOLAgent:
         self.state_counter = 0
         self.rendering = rendering
         self.log = log
-        self.max_steps = 100
 
         self.initialize_prolog()
 
-    def reset(self):
-        self.state_counter = 0
-        obs, _ = self.env.reset()
-        self.initialize_prolog()
-        return obs
 
     def initialize_prolog(self):
         # Clear existing facts in Prolog
@@ -47,10 +41,7 @@ class FOLAgent:
         gx, gy = self.env.gold_pos
         self.prolog.assertz(f"gold({gx}, {gy})")
 
-        # Add agent position and orientation
-        ax, ay = self.env.agent_pos
-        self.prolog.assertz(f"agent({ax}, {ay}, {self.state_counter})")
-        self.prolog.assertz(f"orientation({['north', 'east', 'south', 'west'][self.env.agent_dir]}, {self.state_counter})")
+        self.update_agent_position_and_orientation()
 
         # Add starting position
         sx, sy = self.env.entrance
@@ -65,8 +56,6 @@ class FOLAgent:
         if self.log:
             self.prolog.assertz(f"log(true)")
 
-        # Update knowledge base
-        self.update_kb(self.env._get_observation())
 
     def update_kb(self, perceptions):
         ax, ay = self.env.agent_pos
@@ -104,37 +93,15 @@ class FOLAgent:
         decision = list(self.prolog.query(f"make_decision(Action, {self.state_counter})"))[0]["Action"]
         return decision
 
-    def execute_action(self, action):
-        if action == config.ACTION_GRAB:
-            if self.env.agent_pos == self.env.gold_pos:
-                list(self.prolog.query(f"retract(gold({self.env.gold_pos[0]}, {self.env.gold_pos[1]}))"))
-        elif action == config.ACTION_SHOOT:
-            list(self.prolog.query(f"retract(wumpus({self.env.wumpus_pos[0]}, {self.env.wumpus_pos[1]}))"))
+    def act(self, obs):
 
-        obs, _, _, _, feedback = self.env.step(action)
+        self.update_kb(obs)
+        self.state_counter += 1
+        self.update_agent_position_and_orientation()
 
-        return obs, feedback["won"]
-
-    def render_environment(self):
-        self.env.render()
-        time.sleep(0.35)
-        # input("Press Enter to continue...")  # Wait for user input after rendering
-
-    def run(self):
-        done = False
-
-        for i in range(self.max_steps):
-            action, has_won, _ = self.act()
-            if has_won:
-                done = True
-                break
-
-        return 1 if done else 0
-
-    def act(self):
         # Render the environment at each step
         if self.rendering:
-            self.render_environment()
+            self.env.render()
 
         action = self.make_decision()
         self.update_result(action)
@@ -150,26 +117,33 @@ class FOLAgent:
         }
         action_int = action_map[action]
 
-        obs, has_won = self.execute_action(action_int)
+        if action == config.ACTION_GRAB:
+            if self.env.agent_pos == self.env.gold_pos:
+                list(self.prolog.query(f"retract(gold({self.env.gold_pos[0]}, {self.env.gold_pos[1]}))"))
+        elif action == config.ACTION_SHOOT:
+            list(self.prolog.query(f"retract(wumpus({self.env.wumpus_pos[0]}, {self.env.wumpus_pos[1]}))"))
 
-        self.update_kb(obs)
-        self.state_counter += 1
-        self.update_agent_position_and_orientation()
-
-        return action_int, has_won, obs
+        return action_int
 
 
 if __name__ == "__main__":
     rendering = False
-    default_map = False
     log = False
     GAME_COUNT = 10_000
     winCount = 0
-    for _ in range(GAME_COUNT) if not rendering else range(1):
-        env = WumpusWorldEnv(default_map=default_map, num_of_pits=3)
-        agent = FOLAgent(env, rendering=rendering, log=log)
-        win = agent.run()
-        winCount += win
+    max_steps = 100
+    env = WumpusWorldEnv(grid_size=4, default_map=False, num_of_pits=3, sensation_maps=False)
+    agent = FOLAgent(env, rendering=rendering, log=log)
+    for i in range(GAME_COUNT) if not rendering else range(1):
+        obs, info = env.reset()
+        agent.state_counter = 0
+        agent.initialize_prolog()
+        for step in range(max_steps):
+            action = agent.act(obs)
+            obs, _, _, _, info = env.step(action)
+            if info["won"]:
+                winCount += 1
+                break
     if not rendering:
         print(f"{GAME_COUNT} games finished. Win rate: {winCount/GAME_COUNT * 100:.2f}%")
     else:

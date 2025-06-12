@@ -72,7 +72,7 @@ class Renderer:
 
         self.draw_observation_bar(observation)
         pygame.display.flip()
-        self.clock.tick(30)
+        self.clock.tick(5)
 
     def close(self):
         pygame.quit()
