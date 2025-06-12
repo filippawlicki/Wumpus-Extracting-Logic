@@ -102,5 +102,6 @@ if __name__ == "__main__":
         print(f"  Deaths: {result['dead']}")
         print(f"  Win rate: {(result['won'] / max_episodes):.2%}")
         print(f"  Survival rate: {(1 - result['dead'] / max_episodes):.2%}")
+        print(f"  Average steps to win: {np.mean(steps) if steps else 0:.2f}")
         print()
     print(f"Not possible to win: {not_possible_games} / {max_episodes}")
