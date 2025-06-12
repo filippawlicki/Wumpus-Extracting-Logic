@@ -24,7 +24,10 @@ episode = 0
 print("Starting data collection...")
 
 while episode < max_episodes:
-    obs, _ = env.reset()
+    obs, info = env.reset()
+    possible_to_win = info["possible_to_win"]
+    if not possible_to_win:
+        continue
     done = False
     steps = 0
 
@@ -32,6 +35,7 @@ while episode < max_episodes:
         action = agent.act(obs)
         if action is None:
             break
+
 
         # mapping [stench, breeze, glitter, bump, scream, hasgold, on_entrance]
         input_features = obs[:7].tolist() if hasattr(obs, "tolist") else list(obs[:7])

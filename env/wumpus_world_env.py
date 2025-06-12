@@ -48,6 +48,41 @@ class WumpusWorldEnv(gym.Env):
         self.renderer = Renderer(self)
         self.reset()
 
+    def get_map_info(self):
+        return {
+            "wumpus_pos": self.wumpus_pos,
+            "gold_pos": self.gold_pos,
+            "pit_pos": self.pit_pos,
+            "agent_dir": self.agent_dir
+        }
+
+    def set_map_info(self, map_info):
+        self.grid = np.zeros((self.grid_size, self.grid_size, 2), dtype=int)
+        self.wumpus_pos = map_info["wumpus_pos"]
+        self.gold_pos = map_info["gold_pos"]
+        self.pit_pos = map_info["pit_pos"]
+        self.agent_dir = map_info["agent_dir"]
+        self.agent_pos = self.entrance
+        self._update_perception()
+        self.is_possible = self._check_map_possibility()
+        return self._get_observation(), {"possible_to_win": self.is_possible}
+
+    def _check_map_possibility(self):
+        """
+        Check if there is a path from entrance to gold.
+        """
+        stack = [self.entrance]
+        visited = set()
+        while stack:
+            current = stack.pop()
+            if current == self.gold_pos:
+                return True
+            visited.add(current)
+            for nx, ny in self._get_neighbors(current):
+                if (nx, ny) not in visited and (nx, ny) not in self.pit_pos:
+                    stack.append((nx, ny))
+        return False
+
     def reset(self, seed=None, options=None):
         """
         Resets the environment to the initial state.
@@ -59,7 +94,7 @@ class WumpusWorldEnv(gym.Env):
         self.bump = False
         self.scream = False
 
-        self.grid = np.zeros((self.grid_size, self.grid_size, 2), dtype=int) # breeze, stench, glitter
+        self.grid = np.zeros((self.grid_size, self.grid_size, 2), dtype=int)
         self.visited = np.zeros((self.grid_size, self.grid_size), dtype=bool)
         self.visited.fill(False)
         self.turns_in_row = 0
@@ -102,19 +137,9 @@ class WumpusWorldEnv(gym.Env):
         self._update_perception()
 
         # Check is it possible to complete the map
-        self.is_possible = False
+        self.is_possible = self._check_map_possibility()
         # Check with DFS is there is a path from entrance to gold
-        stack = [self.entrance]
-        visited = set()
-        while stack:
-            current = stack.pop()
-            if current == self.gold_pos:
-                self.is_possible = True
-                break
-            visited.add(current)
-            for nx, ny in self._get_neighbors(current):
-                if (nx, ny) not in visited and (nx, ny) not in self.pit_pos:
-                    stack.append((nx, ny))
+
 
         # if not self.is_possible:
         #     print("Map is not possible.")

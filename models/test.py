@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-def save_steps_plot(steps_to_win):
+def save_steps_plot(steps_to_win, agent_name):
     """ Save a histogram showing the distribution of steps needed to win. """
     plt.figure(figsize=(12, 6))
 
@@ -19,20 +19,31 @@ def save_steps_plot(steps_to_win):
     plt.title('Distribution of Steps Needed to Win')
     plt.xticks(np.arange(min_steps, max(steps_to_win) + 1, step=1))
     plt.tight_layout()
-    plt.savefig(f"steps_to_win_distribution.png")
+    plt.savefig(f"steps_to_win_distribution_{agent_name}.png")
     plt.close()
 
 
 if __name__ == "__main__":
-    env = WumpusWorldEnv(grid_size=4, default_map=False, num_of_pits=3, sensation_maps=False)
+    agents = [
+        {"name": "basic", "path": "random_map_weights/model_final_3pit.pt", "sensation_maps": False},
+        {"name": "greedy", "path": "greedy_agent_weights/model_final.pt", "sensation_maps": False},
+        {"name": "sensation", "path": "sensation_agent_weights/model_final_1-2-3pit.pt", "sensation_maps": True},
+    ]
 
-    obs, _ = env.reset()
+    results = [{"agent": agent["name"], "won": 0, "dead": 0, "steps": []} for agent in agents]
+
+    base_env = WumpusWorldEnv(grid_size=4, default_map=False, num_of_pits=3, sensation_maps=False)
+
     done = False
+    agent_instances = []
+    env_instances = []
 
-    state_dim = env.observation_space.shape[0]
-    action_dim = env.action_space.n
-    agent = DQNAgent(state_dim, action_dim, epsilon=0, epsilon2=0, min_epsilon=0, min_epsilon2=0)  # No exploration
-    agent.load_model("random_map_weights/model_final_3pit.pt")
+    for i, agent in enumerate(agents):
+        env_instances.append(WumpusWorldEnv(grid_size=4, default_map=False, num_of_pits=3, sensation_maps=agent["sensation_maps"]))
+        state_dim = env_instances[i].observation_space.shape[0]
+        action_dim = env_instances[i].action_space.n
+        agent_instances.append(DQNAgent(state_dim, action_dim, epsilon=0, epsilon2=0, min_epsilon=0, min_epsilon2=0))
+        agent_instances[i].load_model(f"{agent['path']}")
 
     max_episodes = 5000
     max_steps = 100
@@ -45,33 +56,44 @@ if __name__ == "__main__":
     print("Starting test...")
 
     while episode < max_episodes:
-        obs, info = env.reset()
+        obs, info = base_env.reset()
+        map_info = base_env.get_map_info()
         possible_to_win = info["possible_to_win"]
         if not possible_to_win:
             not_possible_games += 1
             continue
-        done = False
-        steps = 0
 
-        while not done and steps < max_steps:
-            action = agent.act(obs)
-            if action is None:
-                break
+        for i, agent in enumerate(agent_instances):
+            env_instances[i].reset()
+            obs, info = env_instances[i].set_map_info(map_info)
+            done = False
+            steps = 0
 
-            obs, reward, done, truncated, info = env.step(action)
-            if info["dead"]:
-                dead_games += 1
-                break
-            if info["won"]:
-                won_games += 1
-                steps_to_win.append(steps)
-                break
-            steps += 1
+            while not done and steps < max_steps:
+                action = agent.act(obs)
+                if action is None:
+                    break
+
+                obs, reward, done, truncated, info = env_instances[i].step(action)
+                if info["dead"]:
+                    results[i]["dead"] += 1
+                    break
+                if info["won"]:
+                    results[i]["won"] += 1
+                    results[i]["steps"].append(steps)
+                    break
+                steps += 1
 
         episode += 1
 
-    save_steps_plot(steps_to_win)
-
-    print(f"Test completed. Won {won_games}/{max_episodes} games. Win rate: {(won_games/max_episodes):.2%}")
-    print(f"Survived {max_episodes - dead_games}/{max_episodes} games. Survival rate: {(max_episodes - dead_games)/max_episodes:.2%}")
-    print(f"Not possible to win in {not_possible_games}/{max_episodes} games. Not possible rate: {(not_possible_games/max_episodes):.2%}")
+    for result in results:
+        steps = result["steps"]
+        if steps:
+            save_steps_plot(steps, result["agent"])
+        print(f"{result["agent"]}:")
+        print(f"  Wins: {result['won']} / {max_episodes}")
+        print(f"  Deaths: {result['dead']}")
+        print(f"  Win rate: {(result['won'] / max_episodes):.2%}")
+        print(f"  Survival rate: {(1 - result['dead'] / max_episodes):.2%}")
+        print()
+    print(f"Not possible to win: {not_possible_games} / {max_episodes}")

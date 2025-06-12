@@ -12,7 +12,7 @@ y1 = df1["action"]
 # Split data and train two models with different seeds
 X_train1, X_test1, y_train1, y_test1 = train_test_split(X1, y1, test_size=0.2, random_state=42)
 
-df2 = pd.read_csv("../datasets/dqn_3pit_random_map_dataset.csv")
+df2 = pd.read_csv("../datasets/sensation_agent_1-2-3pit_dataset.csv")
 X2 = df2[["stench", "breeze", "glitter", "bump", "scream", "hasgold", "on_entrance"]]
 y2 = df2["action"]
 
