@@ -10,26 +10,11 @@
 :- dynamic result/2.
 :- dynamic log/1.
 
-adj(-4, -3).
-adj(-3, -4).
-adj(-3, -2).
-adj(-2, -3).
-adj(-2, -1).
-adj(-1, -2).
-adj(-1, 0).
-adj(0, -1).
-adj(0, 1).
-adj(1, 0).
-adj(1, 2).
-adj(2, 1).
-adj(2, 3).
-adj(3, 2).
-adj(3, 4).
-adj(4, 3).
-
 adjacent(X, Y, NX, NY) :-
-	(NX is X, adj(Y, NY));
-	(NY is Y, adj(X, NX)).
+    (NX is X + 1, NY is Y);
+    (NX is X - 1, NY is Y);
+    (NX is X, NY is Y + 1);
+    (NX is X, NY is Y - 1).
 
 % PERCEPTIONS
 

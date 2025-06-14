@@ -52,12 +52,16 @@ def save_plots(episode_rewards, episode_losses, episode_wins, episode, dir, wind
 
 
 if __name__ == "__main__":
-    env = WumpusWorldEnv(grid_size=4, default_map=False, num_of_pits=3, sensation_maps=True)
+    num_of_pits = 3
+    grid_size = 5
+    buffer_size = 10
+    sensation_maps = True
+    env = WumpusWorldEnv(grid_size=grid_size, default_map=False, num_of_pits=num_of_pits, sensation_maps=sensation_maps, buffer_size=buffer_size)
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
     agent = DQNAgent(state_dim, action_dim)
     #agent.load_model("sensation_agent_weights/model_final_1-2-3pit.pt")
-    agent.load_epsilon(env.num_of_pits) # Load epsilon values based on the number of pits
+    agent.load_epsilon(env.num_of_pits)
 
     episodes = 20_000
     max_steps = 100
@@ -141,7 +145,7 @@ if __name__ == "__main__":
             save_plots(reward_history, loss_history, won_history, episode, model_dir)
 
     print(f"Training completed in {((time.time() - start_checkpoint)/60):.2f} minutes.")
-    path = os.path.join(model_dir, "model_final_1-2-3pit.pt")
+    path = os.path.join(model_dir, f"model_final_{num_of_pits}pit_size_{grid_size}.pt")
     agent.save(path)
     print(f"Final model saved to {path}")
     save_plots(reward_history, loss_history, won_history, "final", model_dir)

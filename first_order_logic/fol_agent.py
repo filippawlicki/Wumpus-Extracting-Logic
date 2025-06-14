@@ -22,11 +22,9 @@ class FOLAgent:
         list(self.prolog.query("retractall(pit(_, _))"))
         list(self.prolog.query("retractall(gold(_, _))"))
         list(self.prolog.query("retractall(agent(_, _, _))"))
-        list(self.prolog.query("retractall(start(_, _))"))
         list(self.prolog.query("retractall(orientation(_, _))"))
         list(self.prolog.query("retractall(kb(_, _, _, _))"))
         list(self.prolog.query("retractall(result(_, _))"))
-        list(self.prolog.query("retractall(grid_size(_))"))
         list(self.prolog.query("retractall(log(_))"))
 
         # Add Wumpus position
@@ -43,12 +41,7 @@ class FOLAgent:
 
         self.update_agent_position_and_orientation()
 
-        # Add starting position
-        sx, sy = self.env.entrance
-        self.prolog.assertz(f"start({sx}, {sy})")
-
         size = self.env.grid_size
-        self.prolog.assertz(f"grid_size({size})")
 
         # Initialize knowledge base
         list(self.prolog.query(f"initialize_kb({size})"))
@@ -129,7 +122,7 @@ class FOLAgent:
 if __name__ == "__main__":
     rendering = False
     log = False
-    GAME_COUNT = 10_000
+    GAME_COUNT = 10_00
     winCount = 0
     max_steps = 100
     env = WumpusWorldEnv(grid_size=4, default_map=False, num_of_pits=3, sensation_maps=False)

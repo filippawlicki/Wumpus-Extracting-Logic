@@ -9,7 +9,7 @@ class WumpusWorldEnv(gym.Env):
     Wumpus World Environment for reinforcement learning.
     """
 
-    def __init__(self, grid_size=4, default_map=True, num_of_pits=3, sensation_maps=True):
+    def __init__(self, grid_size=4, default_map=True, num_of_pits=3, sensation_maps=True, buffer_size=4):
         super(WumpusWorldEnv, self).__init__()
         self.bump = False
         self.scream = False
@@ -37,11 +37,12 @@ class WumpusWorldEnv(gym.Env):
         self.is_possible = True
 
         if self.sensation_maps:
-            state_dim_size = ((self.grid_size*2 - 1) ** 2) * 2 + (self.grid_size*2 + 1) ** 2 + 10
+            self.buffer_size = buffer_size
+            state_dim_size = ((self.buffer_size*2 - 1) ** 2) * 2 + (self.buffer_size*2 + 1) ** 2 + 10
             self.observation_space = gym.spaces.Box(low=-1, high=1, shape=(state_dim_size,), dtype=np.float32)
-            self.breeze_sensation_map = np.zeros((self.grid_size*2 - 1, self.grid_size*2 - 1), dtype=int)
-            self.stench_sensation_map = np.zeros((self.grid_size*2 - 1, self.grid_size*2 - 1), dtype=int)
-            self.wall_sensation_map = np.zeros((self.grid_size*2 + 1, self.grid_size*2 + 1), dtype=int)
+            self.breeze_sensation_map = np.zeros((self.buffer_size*2 - 1, self.buffer_size*2 - 1), dtype=int)
+            self.stench_sensation_map = np.zeros((self.buffer_size*2 - 1, self.buffer_size*2 - 1), dtype=int)
+            self.wall_sensation_map = np.zeros((self.buffer_size*2 + 1, self.buffer_size*2 + 1), dtype=int)
         else:
             self.observation_space = gym.spaces.Box(low=0, high=1, shape=(10,), dtype=np.float32)
 
@@ -102,6 +103,8 @@ class WumpusWorldEnv(gym.Env):
             self.breeze_sensation_map.fill(0)
             self.stench_sensation_map.fill(0)
             self.wall_sensation_map.fill(0)
+            self.agent_relative_pos = (self.buffer_size - 1, self.buffer_size - 1)
+            self.agent_relative_dir = 0
 
 
         if self.default_map:
@@ -174,28 +177,32 @@ class WumpusWorldEnv(gym.Env):
                 self.grid[nx, ny, 1] = 1 # Stench
 
     def _update_sensation_maps(self):
-        x, y = self.agent_pos
+        true_x, true_y = self.agent_pos
+        # x, y = self.agent_relative_pos
+        # dir = self.agent_relative_dir
+        x, y = (self.agent_pos[0] + self.buffer_size - 1, self.agent_pos[1] + self.buffer_size - 1)
+        dir = self.agent_dir
 
         # 1 for breeze, -1 for no breeze
-        if self.grid[x, y, 0] == 1:
-            self.breeze_sensation_map[x + self.grid_size - 1, y + self.grid_size - 1] = 1
+        if self.grid[true_x, true_y, 0] == 1:
+            self.breeze_sensation_map[x, y] = 1
         else:
-            self.breeze_sensation_map[x + self.grid_size - 1, y + self.grid_size - 1] = -1
+            self.breeze_sensation_map[x, y] = -1
 
         # 1 for stench, -1 for no stench
-        if self.grid[x, y, 1] == 1:
-            self.stench_sensation_map[x + self.grid_size - 1, y + self.grid_size - 1] = 1
+        if self.grid[true_x, true_y, 1] == 1:
+            self.stench_sensation_map[x, y] = 1
         else:
-            self.stench_sensation_map[x + self.grid_size - 1, y + self.grid_size - 1] = -1
+            self.stench_sensation_map[x, y] = -1
 
         # 1 for wall, -1 for agent position
         self.wall_sensation_map[self.wall_sensation_map == -1] = 0  # Reset previous agent position
-        self.wall_sensation_map[x + self.grid_size, y + self.grid_size] = -1
+        self.wall_sensation_map[x + 1, y + 1] = -1
         if self.bump:
-            dx, dy = [(0, -1), (1, 0), (0, 1), (-1, 0)][self.agent_dir]
+            dx, dy = [(0, -1), (1, 0), (0, 1), (-1, 0)][dir]
             bump_x = x + dx
             bump_y = y + dy
-            self.wall_sensation_map[bump_x + self.grid_size, bump_y + self.grid_size] = 1
+            self.wall_sensation_map[bump_x + 1, bump_y + 1] = 1
 
 
     def _get_neighbors(self, pos):
@@ -269,7 +276,6 @@ class WumpusWorldEnv(gym.Env):
         reward = -1 # Default reward for each step
         done = False
         x, y = self.agent_pos
-        new_x, new_y = x, y
         tookGold = False
         won = False
         log = False
@@ -295,13 +301,23 @@ class WumpusWorldEnv(gym.Env):
                     self.visited[new_x, new_y] = True
                     reward = 120 # Reward for visiting a new cell
                 self.agent_pos = new_x, new_y
+                if self.sensation_maps:
+                    rel_x, rel_y = self.agent_relative_pos
+                    rel_dx, rel_dy = [(0, -1), (1, 0), (0, 1), (-1, 0)][self.agent_relative_dir]
+                    new_rel_x = rel_x + rel_dx
+                    new_rel_y = rel_y + rel_dy
+                    self.agent_relative_pos = new_rel_x, new_rel_y
 
 
         elif action == config.ACTION_TURN_LEFT:
             self.agent_dir = (self.agent_dir - 1) % 4
+            if self.sensation_maps:
+                self.agent_relative_dir = (self.agent_relative_dir - 1) % 4
 
         elif action == config.ACTION_TURN_RIGHT:
             self.agent_dir = (self.agent_dir + 1) % 4
+            if self.sensation_maps:
+                self.agent_relative_dir = (self.agent_relative_dir + 1) % 4
 
         elif action == config.ACTION_GRAB:
             if self.agent_pos == self.gold_pos and not self.agent_has_gold: # Grab gold
