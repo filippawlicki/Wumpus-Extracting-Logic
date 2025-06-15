@@ -19,7 +19,8 @@ def save_steps_plot(steps_to_win, agent_name, num_of_pits=3, grid_size=4):
     plt.xlabel('Number of Steps to Win')
     plt.ylabel('Number of Games')
     plt.title('Distribution of Steps Needed to Win')
-    plt.xticks(np.arange(min_steps, max_steps + 1, 4))
+    step = max(1, (max_steps - min_steps) // 30)
+    plt.xticks(np.arange(min_steps, max_steps + 1, step))
     plt.tight_layout()
     plt.savefig(f"steps_to_win_distribution_{agent_name}_{num_of_pits}pit_size_{grid_size}.png")
     plt.close()
@@ -29,29 +30,6 @@ if __name__ == "__main__":
     grid_size = 7
     buffer_size = 10
     num_of_pits = 3
-    agents = [
-        # {"name": "basic", "path": "random_map_weights/model_final_3pit.pt", "sensation_maps": False, "model": []},
-        # {"name": "greedy", "path": "greedy_agent_weights/model_final.pt", "sensation_maps": False, "model": []},
-        {"name": "sensation", "path": "sensation_agent_weights/bigger_grid_size/model_final_3pit_size_4.pt", "sensation_maps": True, "model": []},
-        {"name": "fol", "sensation_maps": False, "model": []}
-    ]
-
-    results = [{"agent": agent["name"], "won": 0, "dead": 0, "steps": []} for agent in agents]
-
-    base_env = WumpusWorldEnv(grid_size=grid_size, default_map=False, num_of_pits=num_of_pits, sensation_maps=False, buffer_size=buffer_size)
-
-    done = False
-    env_instances = []
-
-    for i, agent in enumerate(agents):
-        env_instances.append(WumpusWorldEnv(grid_size=grid_size, default_map=False, num_of_pits=num_of_pits, sensation_maps=agent["sensation_maps"], buffer_size=buffer_size))
-        state_dim = env_instances[i].observation_space.shape[0]
-        action_dim = env_instances[i].action_space.n
-        if agent["name"] == "fol":
-            agent["model"].append(FOLAgent(env_instances[i], rendering=False, log=False))
-        else:
-            agent["model"].append(DQNAgent(state_dim, action_dim, epsilon=0, epsilon2=0, min_epsilon=0, min_epsilon2=0))
-            agent["model"][0].load_model(f"{agent['path']}")
 
     max_episodes = 10_000
     max_steps = 300
@@ -60,11 +38,37 @@ if __name__ == "__main__":
     not_possible_games = 0
     steps_to_win = []
 
+    agents = [
+        # {"name": "basic", "path": "random_map_weights/model_final_3pit.pt", "sensation_maps": False, "model": []},
+        # {"name": "greedy", "path": "greedy_agent_weights/model_final.pt", "sensation_maps": False, "model": []},
+        {"name": "sensation", "path": "sensation_agent_weights/bigger_grid_size/model_final_3pit_size_4.pt", "sensation_maps": True, "model": []},
+        # {"name": "sensation", "path": "checkpoints/model_ep14000.pt", "sensation_maps": True, "model": []},
+        {"name": "fol", "sensation_maps": False, "model": []}
+    ]
+
+    results = [{"agent": agent["name"], "won": 0, "dead": 0, "steps": []} for agent in agents]
+
+    base_env = WumpusWorldEnv(grid_size=grid_size, default_map=False, num_of_pits=num_of_pits, sensation_maps=False, buffer_size=buffer_size, max_steps=max_steps)
+
+    done = False
+    env_instances = []
+
+    for i, agent in enumerate(agents):
+        env_instances.append(WumpusWorldEnv(grid_size=grid_size, default_map=False, num_of_pits=num_of_pits, sensation_maps=agent["sensation_maps"], buffer_size=buffer_size, max_steps=max_steps))
+        state_dim = env_instances[i].observation_space.shape[0]
+        action_dim = env_instances[i].action_space.n
+        if agent["name"] == "fol":
+            agent["model"].append(FOLAgent(env_instances[i], rendering=False, log=False))
+        else:
+            agent["model"].append(DQNAgent(state_dim, action_dim, epsilon=0, epsilon2=0, min_epsilon=0, min_epsilon2=0))
+            agent["model"][0].load_model(f"{agent['path']}")
+
+
     episode = 0
     print("Starting test...")
 
     while episode < max_episodes:
-        if episode % 100 == 0:
+        if episode % 1_000 == 0:
             print(f"Episode {episode}/{max_episodes}")
         obs, info = base_env.reset()
         map_info = base_env.get_map_info()

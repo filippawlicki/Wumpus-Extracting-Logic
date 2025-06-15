@@ -4,15 +4,19 @@ from sklearn.model_selection import train_test_split
 from itertools import product
 from decision_tree import prune_tree
 
+grid_size = 4
+num_of_pits = 3
+
+
 # Load datasets
-df1 = pd.read_csv("../datasets/fol_3pit_random_map_dataset.csv")
+df1 = pd.read_csv(f"../datasets/fol_agent_{num_of_pits}pit_size_{grid_size}_dataset.csv")
 X1 = df1[["stench", "breeze", "glitter", "bump", "scream", "hasgold", "on_entrance"]]
 y1 = df1["action"]
 
 # Split data and train two models with different seeds
 X_train1, X_test1, y_train1, y_test1 = train_test_split(X1, y1, test_size=0.2, random_state=42)
 
-df2 = pd.read_csv("../datasets/sensation_agent_1-2-3pit_dataset.csv")
+df2 = pd.read_csv(f"../datasets/sensation_agent_{num_of_pits}pit_size_{grid_size}_dataset.csv")
 X2 = df2[["stench", "breeze", "glitter", "bump", "scream", "hasgold", "on_entrance"]]
 y2 = df2["action"]
 

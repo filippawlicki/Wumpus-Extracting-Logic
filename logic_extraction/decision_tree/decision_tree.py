@@ -30,8 +30,12 @@ def prune_tree(org_tree: DecisionTreeClassifier):
     return pruned_tree
 
 if __name__ == "__main__":
+    agent_name = "sensation"
+    num_of_pits = 3
+    grid_size = 7
+
     # Load dataset
-    df = pd.read_csv("../datasets/sensation_agent_1-2-3pit_dataset.csv")
+    df = pd.read_csv(f"../datasets/{agent_name}_agent_{num_of_pits}pit_size_{grid_size}_dataset.csv")
     X = df[["stench", "breeze", "glitter", "bump", "scream", "hasgold", "on_entrance"]]
     y = df["action"]
 
@@ -65,7 +69,7 @@ if __name__ == "__main__":
         impurity=False  # Exclude gini
     )
     (graph,) = pydot.graph_from_dot_data(dot_data)
-    graph.write_png("decision_tree.png")
+    graph.write_png(f"decision_tree_rules_{agent_name}_agent_{num_of_pits}pit_size_{grid_size}.png")
 
     importances = clf.feature_importances_
     importances = [round(i, 3) for i in importances]
@@ -74,9 +78,9 @@ if __name__ == "__main__":
     plt.bar_label(bars)
     plt.xlabel("Feature Importance")
     plt.title("Feature Importance of Decision Tree")
-    plt.savefig("feature_importance.png")
+    plt.savefig(f"feature_importance_{agent_name}_agent_{num_of_pits}pit_size_{grid_size}.png")
 
 
 
 
-    print("Decision tree rules saved to decision_tree.png")
+    print(f"Decision tree rules saved to decision_tree_rules_{agent_name}_agent_{num_of_pits}pit_size_{grid_size}.png")

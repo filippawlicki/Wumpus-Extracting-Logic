@@ -9,7 +9,7 @@ class WumpusWorldEnv(gym.Env):
     Wumpus World Environment for reinforcement learning.
     """
 
-    def __init__(self, grid_size=4, default_map=True, num_of_pits=3, sensation_maps=True, buffer_size=4):
+    def __init__(self, grid_size=4, default_map=True, num_of_pits=3, sensation_maps=True, buffer_size=4, max_steps=100):
         super(WumpusWorldEnv, self).__init__()
         self.bump = False
         self.scream = False
@@ -31,6 +31,7 @@ class WumpusWorldEnv(gym.Env):
         self.visited.fill(False)
         self.turns_in_row = 0
         self.num_of_pits = num_of_pits
+        self.max_steps = max_steps
         self.steps_taken = 0
         # Top left corner 2x2 box is prohibited for creating the map as it is the entrance
         self.prohibited_box = [(0, 0), (0, 1), (1, 0), (1, 1)]
@@ -373,7 +374,7 @@ class WumpusWorldEnv(gym.Env):
             done = True
 
         self.steps_taken += 1
-        if self.steps_taken >= 100: # Max steps
+        if self.steps_taken >= self.max_steps: # Max steps
             if log:
                 print("Max steps reached: -1000 reward")
             reward = -1000

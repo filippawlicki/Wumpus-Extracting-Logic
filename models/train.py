@@ -53,7 +53,7 @@ def save_plots(episode_rewards, episode_losses, episode_wins, episode, dir, wind
 
 if __name__ == "__main__":
     num_of_pits = 3
-    grid_size = 5
+    grid_size = 6
     buffer_size = 10
     sensation_maps = True
     env = WumpusWorldEnv(grid_size=grid_size, default_map=False, num_of_pits=num_of_pits, sensation_maps=sensation_maps, buffer_size=buffer_size)

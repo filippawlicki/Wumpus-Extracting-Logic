@@ -15,6 +15,11 @@ class FOLAgent:
 
         self.initialize_prolog()
 
+    def reset(self):
+        self.state_counter = 0
+        obs, info = self.env.reset()
+        self.initialize_prolog()
+        return obs, info
 
     def initialize_prolog(self):
         # Clear existing facts in Prolog

@@ -3,28 +3,42 @@ import pygame
 
 import config
 from env.wumpus_world_env import WumpusWorldEnv
+from first_order_logic.fol_agent import FOLAgent
 from models.dqn_agent import DQNAgent
 
-env = WumpusWorldEnv(grid_size=4, default_map=False, num_of_pits=3, sensation_maps=True)
+max_episodes = 5_000
+max_steps = 100
+grid_size = 7
+num_of_pits = 3
+buffer_size = 10
+# agent_name = "fol"
+agent_name = "sensation"
+sensation_maps = True if agent_name == "sensation" else False
+
+env = WumpusWorldEnv(grid_size=grid_size, default_map=False, num_of_pits=num_of_pits, sensation_maps=sensation_maps, buffer_size=buffer_size, max_steps=max_steps)
 
 obs, _ = env.reset()
 done = False
 
-state_dim = env.observation_space.shape[0]
-action_dim = env.action_space.n
-agent = DQNAgent(state_dim, action_dim, epsilon=0, epsilon2=0, min_epsilon=0, min_epsilon2=0)  # No exploration
+if agent_name == "fol":
+    agent = FOLAgent(env, rendering=False, log=False)
+else:
+    state_dim = env.observation_space.shape[0]
+    action_dim = env.action_space.n
+    agent = DQNAgent(state_dim, action_dim, epsilon=0, epsilon2=0, min_epsilon=0, min_epsilon2=0)  # No exploration
 
-agent.load_model("../models/sensation_agent_weights/model_final_1-2-3pit.pt")
+    agent.load_model(f"../models/sensation_agent_weights/bigger_grid_size/model_final_{num_of_pits}pit_size_4.pt")
+
 
 dataset = []
-max_episodes = 5000
-max_steps = 100
 
 episode = 0
 print("Starting data collection...")
 
 while episode < max_episodes:
-    obs, info = env.reset()
+    if episode % 100 == 0:
+        print(f"Episode {episode}/{max_episodes}")
+    obs, info = agent.reset() if agent_name == "fol" else env.reset()
     possible_to_win = info["possible_to_win"]
     if not possible_to_win:
         continue
@@ -50,7 +64,7 @@ while episode < max_episodes:
     episode += 1
 
 # Save the dataset to a CSV file
-output_file = "datasets/sensation_agent_1-2-3pit_dataset.csv"
+output_file = f"datasets/{agent_name}_agent_{num_of_pits}pit_size_{grid_size}_dataset.csv"
 header = ["stench", "breeze", "glitter", "bump", "scream", "hasgold", "on_entrance", "action"]
 
 with open(output_file, mode="w", newline="") as f:
